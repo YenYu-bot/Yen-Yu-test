@@ -1,68 +1,4 @@
-<!DOCTYPE html> 
-<html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>進階拖曳式排課系統</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-      margin: 0;
-    }
-    .task-inputs {
-      margin-bottom: 20px;
-    }
-    .task {
-      display: inline-block;
-      padding: 5px 10px;
-      border-radius: 5px;
-      margin: 5px;
-      cursor: grab;
-      color: #fff;
-      font-weight: bold;
-      position: relative;
-    }
-    .task[draggable="true"]:hover {
-      opacity: 0.8;
-    }
-    .editable {
-      border: none;
-      background: transparent;
-      font-weight: bold;
-      color: inherit;
-    }
-    .schedule-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 5px;
-    }
-    .time-slot {
-      border: 1px solid #ccc;
-      min-height: 120px;
-      padding: 2px;
-      position: relative;
-    }
-    .label {
-      font-size: 12px;
-      font-weight: bold;
-    }
-    .cell-inner {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      grid-template-rows: repeat(2, 1fr);
-      height: 100%;
-      gap: 2px;
-    }
-    .cell-box {
-      border: 1px dashed #999;
-      position: relative;
-    }
-    .animate-success {
-      animation: zoomFlash 1s ease-in-out;
-    }
-    .animate-fail {
-      animation: bounceAway 0.8s ease-in-out;
+ease-in-out;
     }
     @keyframes zoomFlash {
       0% { transform: scale(1); background-color: yellow; }
@@ -77,13 +13,22 @@
     }
     .control-buttons {
       margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    #teacherSchedules {
+      background-color: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      white-space: pre-wrap;
     }
   </style>
 </head>
 <body>
   <h1>進階拖曳式排課系統</h1>
   <div class="task-inputs">
-    <label>班級名稱：<input type="text" id="className" /></label>
+    <label>課程名稱：<input type="text" id="className" /></label>
     <label>老師代號：<input type="text" id="teacherCode" /></label>
     <button onclick="addClassTask()">新增課程方塊</button>
   </div>
@@ -106,6 +51,8 @@
     const taskBank = document.getElementById('task-bank');
     const schedule = document.getElementById('schedule');
     const teacherSchedules = {};
+    const taskUsageCount = {};
+    const taskInfoMap = {};
     let taskId = 0;
     const colors = Array.from({length: 30}, (_, i) => `hsl(${i * 12}, 70%, 60%)`);
 
@@ -154,8 +101,10 @@
       task.draggable = true;
       task.style.backgroundColor = colors[taskId % 30];
       task.setAttribute('data-code', code);
-      task.setAttribute('data-usage', '0');
-      task.id = `task-${taskId++}`;
+      task.setAttribute('data-name', name);
+      task.id = `task-${taskId}`;
+      taskUsageCount[task.id] = 0;
+      taskInfoMap[task.id] = { name, code };
       task.ondragstart = drag;
 
       const editable = document.createElement('input');
@@ -164,6 +113,7 @@
       editable.onchange = () => updateDisplay();
       task.appendChild(editable);
       taskBank.appendChild(task);
+      taskId++;
     }
 
     function drag(ev) {
@@ -174,7 +124,7 @@
       ev.preventDefault();
       const id = ev.dataTransfer.getData("text");
       const task = document.getElementById(id);
-      const teacher = task.getAttribute('data-code');
+      const { code, name } = taskInfoMap[id] || {};
       const day = ev.target.getAttribute('data-day');
       const time = ev.target.getAttribute('data-time');
       const label = ev.target.getAttribute('data-label');
@@ -183,7 +133,7 @@
       for (const box of allBoxes) {
         if (box.contains(task)) continue;
         const t = box.querySelector('.task');
-        if (t && t.getAttribute('data-code') === teacher) {
+        if (t && t.getAttribute('data-code') === code) {
           task.classList.add('animate-fail');
           setTimeout(() => task.classList.remove('animate-fail'), 800);
           return;
@@ -194,12 +144,16 @@
       task.classList.add('animate-success');
       setTimeout(() => task.classList.remove('animate-success'), 1000);
 
-      let usage = parseInt(task.getAttribute('data-usage')) + 1;
-      task.setAttribute('data-usage', usage);
-      if (usage >= 2) task.style.display = 'none';
+      taskUsageCount[id] = (taskUsageCount[id] || 0) + 1;
+      if (taskUsageCount[id] >= 2) {
+        task.style.display = 'none';
+      }
 
-      if (!teacherSchedules[teacher]) teacherSchedules[teacher] = [];
-      teacherSchedules[teacher].push(`${day} ${time} ${label}：${task.textContent}`);
+      if (!teacherSchedules[code]) teacherSchedules[code] = [];
+      teacherSchedules[code].push(`${day} ${time} ${label}：${name}`);
+      task.innerHTML = `<span>${code}</span>`;
+      task.setAttribute('data-name', name);
+      task.setAttribute('data-code', code);
       updateDisplay();
     }
 
