@@ -1,212 +1,927 @@
-ease-in-out;
-    }
-    @keyframes zoomFlash {
-      0% { transform: scale(1); background-color: yellow; }
-      50% { transform: scale(1.2); background-color: lime; }
-      100% { transform: scale(1); background-color: inherit; }
-    }
-    @keyframes bounceAway {
-      0% { transform: translateY(0); }
-      25% { transform: translateY(-10px); }
-      50% { transform: translateX(20px); opacity: 0; }
-      100% { transform: translateX(0); opacity: 1; }
-    }
-    .control-buttons {
-      margin-top: 20px;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-    }
-    #teacherSchedules {
-      background-color: #fff;
-      padding: 10px;
-      border: 1px solid #ccc;
-      white-space: pre-wrap;
-    }
-  </style>
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拖曳式排課系統</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --error-color: #e74c3c;
+            --break-color: #f5f5f5;
+            --grid-border: #ddd;
+        }
+        
+        * {
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        
+        .input-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        
+        input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .class-boxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+        }
+        
+        .class-box {
+            padding: 10px;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+            min-width: 150px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .class-box[data-uses="2"] {
+            display: none;
+        }
+        
+        .class-box::after {
+            content: attr(data-uses) "/2";
+            position: absolute;
+            top: 2px;
+            right: 5px;
+            font-size: 10px;
+            opacity: 0.7;
+        }
+        
+        .schedule-grid {
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 1000px;
+        }
+        
+        th, td {
+            border: 1px solid var(--grid-border);
+            padding: 0;
+            text-align: center;
+            position: relative;
+        }
+        
+        th {
+            background-color: #f0f0f0;
+            padding: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .time-cell {
+            width: 100px;
+            background-color: #f0f0f0;
+            padding: 5px;
+            font-size: 0.9em;
+        }
+        
+        .break-cell {
+            background-color: var(--break-color);
+            padding: 5px;
+            font-style: italic;
+            color: #888;
+        }
+        
+        .schedule-cell {
+            height: 80px;
+            min-width: 150px;
+        }
+        
+        .cell-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            height: 100%;
+            width: 100%;
+        }
+        
+        .cell-grid > div {
+            border: 1px dashed #eee;
+            padding: 2px;
+            font-size: 0.8em;
+            color: #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+        }
+        
+        .cell-grid > div:nth-child(1) {
+            content: "2小";
+        }
+        
+        .cell-grid > div:nth-child(2) {
+            content: "3後";
+        }
+        
+        .cell-grid > div:nth-child(3) {
+            content: "4前";
+        }
+        
+        .cell-grid > div:nth-child(4) {
+            content: "4後";
+        }
+        
+        .teacher-schedules {
+            margin-top: 30px;
+        }
+        
+        .teacher-schedule {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+        
+        /* Animation Classes */
+        .success-animation {
+            animation: successPlacement 0.6s ease-in-out;
+            transform-origin: center;
+            z-index: 100;
+        }
+        
+        .error-animation {
+            animation: errorPlacement 0.5s ease-in-out;
+            transform-origin: center;
+        }
+        
+        @keyframes successPlacement {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); filter: brightness(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes errorPlacement {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .dragging {
+            opacity: 0.7;
+            transform: scale(1.05);
+        }
+        
+        .class-in-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+        
+        .highlight {
+            background-color: rgba(46, 204, 113, 0.2);
+        }
+    </style>
 </head>
 <body>
-  <h1>進階拖曳式排課系統</h1>
-  <div class="task-inputs">
-    <label>課程名稱：<input type="text" id="className" /></label>
-    <label>老師代號：<input type="text" id="teacherCode" /></label>
-    <button onclick="addClassTask()">新增課程方塊</button>
-  </div>
-  <div id="task-bank"></div>
-
-  <h2>週課表（0900-2130）</h2>
-  <div class="schedule-grid" id="schedule"></div>
-
-  <h2>老師課表一覽</h2>
-  <pre id="teacherSchedules"></pre>
-
-  <div class="control-buttons">
-    <button onclick="saveSchedule()">💾 儲存排程</button>
-    <button onclick="loadSchedule()">📂 載入排程</button>
-    <button onclick="downloadSchedule()">⬇️ 下載課表</button>
-    <button onclick="copySchedule()">📋 複製課表</button>
-  </div>
-
-  <script>
-    const taskBank = document.getElementById('task-bank');
-    const schedule = document.getElementById('schedule');
-    const teacherSchedules = {};
-    const taskUsageCount = {};
-    const taskInfoMap = {};
-    let taskId = 0;
-    const colors = Array.from({length: 30}, (_, i) => `hsl(${i * 12}, 70%, 60%)`);
-
-    const timeBlocks = [
-      "0900-1030", "1030-1200", "1200-1330(午餐)", "1330-1500",
-      "1500-1630", "1630-1800", "1800-1830(晚餐)", "1830-2000", "2000-2130"
-    ];
-    const days = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-    const boxLabels = ["2小", "3後", "4前", "4後"];
-
-    function generateScheduleGrid() {
-      for (let t = 0; t < timeBlocks.length; t++) {
-        for (let d = 0; d < days.length; d++) {
-          const slot = document.createElement('div');
-          slot.className = 'time-slot';
-          const label = document.createElement('div');
-          label.className = 'label';
-          label.textContent = `${days[d]} ${timeBlocks[t]}`;
-          slot.appendChild(label);
-
-          const inner = document.createElement('div');
-          inner.className = 'cell-inner';
-          boxLabels.forEach(bl => {
-            const cell = document.createElement('div');
-            cell.className = 'cell-box';
-            cell.setAttribute('data-day', days[d]);
-            cell.setAttribute('data-time', timeBlocks[t]);
-            cell.setAttribute('data-label', bl);
-            cell.ondragover = ev => ev.preventDefault();
-            cell.ondrop = dropTask;
-            inner.appendChild(cell);
-          });
-          slot.appendChild(inner);
-          schedule.appendChild(slot);
-        }
-      }
-    }
-
-    function addClassTask() {
-      const name = document.getElementById('className').value.trim();
-      const code = document.getElementById('teacherCode').value.trim();
-      if (!name || !code || document.querySelectorAll('.task').length >= 30) return;
-
-      const task = document.createElement('div');
-      task.className = 'task';
-      task.draggable = true;
-      task.style.backgroundColor = colors[taskId % 30];
-      task.setAttribute('data-code', code);
-      task.setAttribute('data-name', name);
-      task.id = `task-${taskId}`;
-      taskUsageCount[task.id] = 0;
-      taskInfoMap[task.id] = { name, code };
-      task.ondragstart = drag;
-
-      const editable = document.createElement('input');
-      editable.className = 'editable';
-      editable.value = name;
-      editable.onchange = () => updateDisplay();
-      task.appendChild(editable);
-      taskBank.appendChild(task);
-      taskId++;
-    }
-
-    function drag(ev) {
-      ev.dataTransfer.setData("text", ev.target.id);
-    }
-
-    function dropTask(ev) {
-      ev.preventDefault();
-      const id = ev.dataTransfer.getData("text");
-      const task = document.getElementById(id);
-      const { code, name } = taskInfoMap[id] || {};
-      const day = ev.target.getAttribute('data-day');
-      const time = ev.target.getAttribute('data-time');
-      const label = ev.target.getAttribute('data-label');
-
-      const allBoxes = document.querySelectorAll(`[data-day='${day}'][data-time='${time}']`);
-      for (const box of allBoxes) {
-        if (box.contains(task)) continue;
-        const t = box.querySelector('.task');
-        if (t && t.getAttribute('data-code') === code) {
-          task.classList.add('animate-fail');
-          setTimeout(() => task.classList.remove('animate-fail'), 800);
-          return;
-        }
-      }
-
-      ev.target.appendChild(task);
-      task.classList.add('animate-success');
-      setTimeout(() => task.classList.remove('animate-success'), 1000);
-
-      taskUsageCount[id] = (taskUsageCount[id] || 0) + 1;
-      if (taskUsageCount[id] >= 2) {
-        task.style.display = 'none';
-      }
-
-      if (!teacherSchedules[code]) teacherSchedules[code] = [];
-      teacherSchedules[code].push(`${day} ${time} ${label}：${name}`);
-      task.innerHTML = `<span>${code}</span>`;
-      task.setAttribute('data-name', name);
-      task.setAttribute('data-code', code);
-      updateDisplay();
-    }
-
-    function updateDisplay() {
-      const out = [];
-      for (const [teacher, list] of Object.entries(teacherSchedules)) {
-        out.push(`老師 ${teacher}：\n` + list.join("\n"));
-      }
-      document.getElementById('teacherSchedules').textContent = out.join("\n\n");
-    }
-
-    function saveSchedule() {
-      localStorage.setItem('taskBank', taskBank.innerHTML);
-      localStorage.setItem('schedule', schedule.innerHTML);
-      localStorage.setItem('teacherSchedules', JSON.stringify(teacherSchedules));
-      alert('課表已儲存！');
-    }
-
-    function loadSchedule() {
-      if (localStorage.getItem('taskBank')) {
-        taskBank.innerHTML = localStorage.getItem('taskBank');
-        schedule.innerHTML = localStorage.getItem('schedule');
-        Object.assign(teacherSchedules, JSON.parse(localStorage.getItem('teacherSchedules')));
-        document.querySelectorAll('.task').forEach(task => {
-          task.ondragstart = drag;
+    <div class="container">
+        <h1>拖曳式排課系統</h1>
+        
+        <div class="input-section">
+            <input type="text" id="className" placeholder="班級名稱" />
+            <input type="text" id="teacherCode" placeholder="老師代號" />
+            <button id="addClass">新增班級</button>
+            <button id="saveSchedule">儲存課表</button>
+            <button id="loadSchedule">載入課表</button>
+            <button id="downloadSchedule">下載課表</button>
+            <button id="copySchedule">複製課表</button>
+        </div>
+        
+        <div class="class-boxes" id="classBoxes"></div>
+        
+        <div class="schedule-grid">
+            <table id="scheduleTable">
+                <thead>
+                    <tr>
+                        <th>時間</th>
+                        <th>星期一</th>
+                        <th>星期二</th>
+                        <th>星期三</th>
+                        <th>星期四</th>
+                        <th>星期五</th>
+                        <th>星期六</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleBody">
+                    <!-- Will be filled by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="teacher-schedules" id="teacherSchedules">
+            <h2>教師個人課表</h2>
+            <!-- Will be filled by JavaScript -->
+        </div>
+        
+        <div class="action-buttons">
+            <button id="resetSchedule">重設課表</button>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Constants
+            const COLORS = [
+                "#3498db", "#2ecc71", "#9b59b6", "#e74c3c", "#f1c40f", 
+                "#1abc9c", "#34495e", "#e67e22", "#95a5a6", "#d35400",
+                "#27ae60", "#8e44ad", "#16a085", "#f39c12", "#2980b9",
+                "#c0392b", "#7f8c8d", "#2c3e50", "#e84393", "#6c5ce7",
+                "#00cec9", "#55efc4", "#fab1a0", "#ff7675", "#fd79a8",
+                "#a29bfe", "#ffeaa7", "#81ecec", "#74b9ff", "#636e72"
+            ];
+            
+            const TIME_SLOTS = [
+                { start: "0900", end: "1030" },
+                { start: "1030", end: "1200" },
+                { start: "1200", end: "1330", break: true, label: "午餐休息" },
+                { start: "1330", end: "1500" },
+                { start: "1500", end: "1630" },
+                { start: "1630", end: "1800" },
+                { start: "1800", end: "1830", break: true, label: "晚餐休息" },
+                { start: "1830", end: "2000" },
+                { start: "2000", end: "2130" }
+            ];
+            
+            const DAYS = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+            const SUB_SLOTS = ["2小", "3後", "4前", "4後"];
+            
+            // State
+            let classes = [];
+            let schedule = {};
+            let nextColorIndex = 0;
+            
+            // DOM Elements
+            const classBoxesContainer = document.getElementById('classBoxes');
+            const scheduleBody = document.getElementById('scheduleBody');
+            const teacherSchedulesContainer = document.getElementById('teacherSchedules');
+            const addClassButton = document.getElementById('addClass');
+            const saveScheduleButton = document.getElementById('saveSchedule');
+            const loadScheduleButton = document.getElementById('loadSchedule');
+            const downloadScheduleButton = document.getElementById('downloadSchedule');
+            const copyScheduleButton = document.getElementById('copySchedule');
+            const resetScheduleButton = document.getElementById('resetSchedule');
+            
+            // Initialize schedule table
+            function initializeScheduleTable() {
+                scheduleBody.innerHTML = '';
+                
+                TIME_SLOTS.forEach((slot, index) => {
+                    const row = document.createElement('tr');
+                    
+                    const timeCell = document.createElement('td');
+                    timeCell.className = 'time-cell';
+                    timeCell.textContent = `${formatTime(slot.start)}-${formatTime(slot.end)}`;
+                    row.appendChild(timeCell);
+                    
+                    if (slot.break) {
+                        const breakCell = document.createElement('td');
+                        breakCell.className = 'break-cell';
+                        breakCell.colSpan = DAYS.length;
+                        breakCell.textContent = slot.label;
+                        row.appendChild(breakCell);
+                    } else {
+                        DAYS.forEach((day, dayIndex) => {
+                            const cell = document.createElement('td');
+                            cell.className = 'schedule-cell';
+                            cell.dataset.day = dayIndex;
+                            cell.dataset.timeSlot = index;
+                            
+                            const cellGrid = document.createElement('div');
+                            cellGrid.className = 'cell-grid';
+                            
+                            for (let i = 0; i < 4; i++) {
+                                const subCell = document.createElement('div');
+                                subCell.dataset.subSlot = i;
+                                subCell.textContent = SUB_SLOTS[i];
+                                subCell.dataset.day = dayIndex;
+                                subCell.dataset.timeSlot = index;
+                                subCell.addEventListener('dragover', handleDragOver);
+                                subCell.addEventListener('drop', handleDrop);
+                                subCell.addEventListener('dragenter', handleDragEnter);
+                                subCell.addEventListener('dragleave', handleDragLeave);
+                                cellGrid.appendChild(subCell);
+                            }
+                            
+                            cell.appendChild(cellGrid);
+                            row.appendChild(cell);
+                        });
+                    }
+                    
+                    scheduleBody.appendChild(row);
+                });
+            }
+            
+            // Format time for display
+            function formatTime(time) {
+                return time.substring(0, 2) + ':' + time.substring(2);
+            }
+            
+            // Add new class
+            function addClass() {
+                const classNameInput = document.getElementById('className');
+                const teacherCodeInput = document.getElementById('teacherCode');
+                
+                const className = classNameInput.value.trim();
+                const teacherCode = teacherCodeInput.value.trim();
+                
+                if (!className || !teacherCode) {
+                    alert('請輸入班級名稱和老師代號');
+                    return;
+                }
+                
+                if (classes.length >= 30) {
+                    alert('最多只能新增30個班級');
+                    return;
+                }
+                
+                const color = COLORS[nextColorIndex % COLORS.length];
+                nextColorIndex++;
+                
+                const classData = {
+                    id: Date.now(),
+                    name: className,
+                    teacherCode: teacherCode,
+                    color: color,
+                    uses: 0
+                };
+                
+                classes.push(classData);
+                renderClassBoxes();
+                updateTeacherSchedules();
+                
+                classNameInput.value = '';
+                teacherCodeInput.value = '';
+            }
+            
+            // Render class boxes
+            function renderClassBoxes() {
+                classBoxesContainer.innerHTML = '';
+                
+                classes.forEach(classData => {
+                    const box = document.createElement('div');
+                    box.className = 'class-box';
+                    box.textContent = `${classData.name} (${classData.teacherCode})`;
+                    box.style.backgroundColor = classData.color;
+                    box.style.color = getContrastColor(classData.color);
+                    box.draggable = true;
+                    box.dataset.id = classData.id;
+                    box.dataset.name = classData.name;
+                    box.dataset.teacherCode = classData.teacherCode;
+                    box.dataset.color = classData.color;
+                    box.dataset.uses = classData.uses;
+                    
+                    box.addEventListener('dragstart', handleDragStart);
+                    box.addEventListener('dragend', handleDragEnd);
+                    box.contentEditable = true;
+                    box.addEventListener('blur', function() {
+                        const newText = box.textContent;
+                        const match = newText.match(/^(.+)\s*\((.+)\)$/);
+                        if (match) {
+                            const classObj = classes.find(c => c.id == classData.id);
+                            if (classObj) {
+                                classObj.name = match[1].trim();
+                                classObj.teacherCode = match[2].trim();
+                                renderClassBoxes();
+                                updateTeacherSchedules();
+                            }
+                        } else {
+                            box.textContent = `${classData.name} (${classData.teacherCode})`;
+                        }
+                    });
+                    
+                    classBoxesContainer.appendChild(box);
+                });
+            }
+            
+            // Get contrast color for text based on background color
+            function getContrastColor(hexColor) {
+                // Convert hex to RGB
+                const r = parseInt(hexColor.substr(1, 2), 16);
+                const g = parseInt(hexColor.substr(3, 2), 16);
+                const b = parseInt(hexColor.substr(5, 2), 16);
+                
+                // Calculate brightness
+                const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                
+                return brightness > 128 ? '#000' : '#fff';
+            }
+            
+            // Drag event handlers
+            function handleDragStart(e) {
+                if (this.dataset.uses >= 2) {
+                    e.preventDefault();
+                    return;
+                }
+                
+                this.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    id: this.dataset.id,
+                    name: this.dataset.name,
+                    teacherCode: this.dataset.teacherCode,
+                    color: this.dataset.color,
+                    fromCell: this.parentNode.classList.contains('cell-grid') ? 
+                             `${this.parentNode.parentNode.dataset.day}-${this.parentNode.parentNode.dataset.timeSlot}-${this.dataset.subSlot}` : null
+                }));
+                
+                e.dataTransfer.effectAllowed = 'move';
+            }
+            
+            function handleDragEnd() {
+                this.classList.remove('dragging');
+            }
+            
+            function handleDragOver(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            }
+            
+            function handleDragEnter(e) {
+                this.classList.add('highlight');
+            }
+            
+            function handleDragLeave(e) {
+                this.classList.remove('highlight');
+            }
+            
+            function handleDrop(e) {
+                e.preventDefault();
+                this.classList.remove('highlight');
+                
+                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                const day = this.dataset.day;
+                const timeSlot = this.dataset.timeSlot;
+                const subSlot = this.dataset.subSlot;
+                const cellKey = `${day}-${timeSlot}-${subSlot}`;
+                
+                // Check if the teacher already has a class at this time on this day
+                const hasTeacherConflict = checkTeacherConflict(data.teacherCode, day, timeSlot, cellKey);
+                
+                if (hasTeacherConflict) {
+                    showErrorAnimation(data.id);
+                    return;
+                }
+                
+                // If the class is already placed somewhere, remove it from there
+                if (data.fromCell) {
+                    delete schedule[data.fromCell];
+                }
+                
+                // Find if there's already a class in the target cell
+                if (schedule[cellKey]) {
+                    const existingClass = classes.find(c => c.id == schedule[cellKey].id);
+                    if (existingClass) {
+                        existingClass.uses--;
+                    }
+                }
+                
+                // Place the class in the new cell
+                schedule[cellKey] = {
+                    id: data.id,
+                    name: data.name,
+                    teacherCode: data.teacherCode,
+                    color: data.color
+                };
+                
+                const classObj = classes.find(c => c.id == data.id);
+                if (classObj && !data.fromCell) {
+                    classObj.uses++;
+                }
+                
+                renderSchedule();
+                renderClassBoxes();
+                updateTeacherSchedules();
+                
+                showSuccessAnimation(data.id, this);
+            }
+            
+            // Check if the teacher already has a class at this time on this day
+            function checkTeacherConflict(teacherCode, day, timeSlot, excludeCell) {
+                for (const key in schedule) {
+                    if (key !== excludeCell) {
+                        const [cellDay, cellTime, cellSub] = key.split('-');
+                        if (cellDay === day && cellTime === timeSlot && schedule[key].teacherCode === teacherCode) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+            
+            // Render schedule based on current state
+            function renderSchedule() {
+                // Remove all existing class boxes from schedule
+                document.querySelectorAll('.class-in-grid').forEach(el => el.remove());
+                
+                // Add class boxes to their cells
+                for (const key in schedule) {
+                    const [day, timeSlot, subSlot] = key.split('-');
+                    const classData = schedule[key];
+                    
+                    const cell = document.querySelector(`.cell-grid > div[data-day="${day}"][data-time-slot="${timeSlot}"][data-sub-slot="${subSlot}"]`);
+                    if (cell) {
+                        const box = document.createElement('div');
+                        box.className = 'class-box class-in-grid';
+                        box.textContent = `${classData.name} (${classData.teacherCode})`;
+                        box.style.backgroundColor = classData.color;
+                        box.style.color = getContrastColor(classData.color);
+                        box.draggable = true;
+                        box.dataset.id = classData.id;
+                        box.dataset.name = classData.name;
+                        box.dataset.teacherCode = classData.teacherCode;
+                        box.dataset.color = classData.color;
+                        box.dataset.subSlot = subSlot;
+                        
+                        box.addEventListener('dragstart', handleDragStart);
+                        box.addEventListener('dragend', handleDragEnd);
+                        
+                        cell.textContent = '';
+                        cell.appendChild(box);
+                    }
+                }
+            }
+            
+            // Update teacher schedules
+            function updateTeacherSchedules() {
+                teacherSchedulesContainer.innerHTML = '<h2>教師個人課表</h2>';
+                
+                // Get unique teacher codes
+                const teacherCodes = [...new Set(classes.map(c => c.teacherCode))];
+                
+                teacherCodes.forEach(teacherCode => {
+                    const teacherSchedule = document.createElement('div');
+                    teacherSchedule.className = 'teacher-schedule';
+                    
+                    const title = document.createElement('h3');
+                    title.textContent = `教師: ${teacherCode}`;
+                    teacherSchedule.appendChild(title);
+                    
+                    const table = document.createElement('table');
+                    
+                    // Create header row
+                    const thead = document.createElement('thead');
+                    const headerRow = document.createElement('tr');
+                    
+                    const thTime = document.createElement('th');
+                    thTime.textContent = '時間';
+                    headerRow.appendChild(thTime);
+                    
+                    DAYS.forEach(day => {
+                        const th = document.createElement('th');
+                        th.textContent = day;
+                        headerRow.appendChild(th);
+                    });
+                    
+                    thead.appendChild(headerRow);
+                    table.appendChild(thead);
+                    
+                    // Create body rows
+                    const tbody = document.createElement('tbody');
+                    
+                    TIME_SLOTS.forEach((slot, timeIndex) => {
+                        if (slot.break) return;
+                        
+                        const row = document.createElement('tr');
+                        
+                        const timeCell = document.createElement('td');
+                        timeCell.className = 'time-cell';
+                        timeCell.textContent = `${formatTime(slot.start)}-${formatTime(slot.end)}`;
+                        row.appendChild(timeCell);
+                        
+                        DAYS.forEach((day, dayIndex) => {
+                            const cell = document.createElement('td');
+                            
+                            let hasClass = false;
+                            for (let subSlot = 0; subSlot < 4; subSlot++) {
+                                const key = `${dayIndex}-${timeIndex}-${subSlot}`;
+                                if (schedule[key] && schedule[key].teacherCode === teacherCode) {
+                                    const classInfo = document.createElement('div');
+                                    classInfo.textContent = `${schedule[key].name} (${SUB_SLOTS[subSlot]})`;
+                                    classInfo.style.backgroundColor = schedule[key].color;
+                                    classInfo.style.color = getContrastColor(schedule[key].color);
+                                    classInfo.style.padding = '2px';
+                                    classInfo.style.margin = '2px';
+                                    classInfo.style.borderRadius = '3px';
+                                    cell.appendChild(classInfo);
+                                    hasClass = true;
+                                }
+                            }
+                            
+                            if (!hasClass) {
+                                cell.textContent = '-';
+                            }
+                            
+                            row.appendChild(cell);
+                        });
+                        
+                        tbody.appendChild(row);
+                    });
+                    
+                    table.appendChild(tbody);
+                    teacherSchedule.appendChild(table);
+                    
+                    teacherSchedulesContainer.appendChild(teacherSchedule);
+                });
+            }
+            
+            // Animation functions
+            function showSuccessAnimation(classId, targetCell) {
+                const classBox = document.querySelector(`.class-box[data-id="${classId}"]`);
+                if (classBox) {
+                    classBox.classList.add('success-animation');
+                    setTimeout(() => {
+                        classBox.classList.remove('success-animation');
+                    }, 600);
+                }
+            }
+            
+            function showErrorAnimation(classId) {
+                const classBox = document.querySelector(`.class-box[data-id="${classId}"]`);
+                if (classBox) {
+                    classBox.classList.add('error-animation');
+                    setTimeout(() => {
+                        classBox.classList.remove('error-animation');
+                    }, 500);
+                }
+            }
+            
+            // Save schedule to localStorage
+            function saveSchedule() {
+                const data = {
+                    classes: classes,
+                    schedule: schedule,
+                    nextColorIndex: nextColorIndex
+                };
+                
+                localStorage.setItem('scheduleData', JSON.stringify(data));
+                alert('課表已儲存');
+            }
+            
+            // Load schedule from localStorage
+            function loadSchedule() {
+                const data = localStorage.getItem('scheduleData');
+                if (data) {
+                    const parsedData = JSON.parse(data);
+                    classes = parsedData.classes;
+                    schedule = parsedData.schedule;
+                    nextColorIndex = parsedData.nextColorIndex || 0;
+                    
+                    renderClassBoxes();
+                    renderSchedule();
+                    updateTeacherSchedules();
+                    alert('課表已載入');
+                } else {
+                    alert('沒有已儲存的課表');
+                }
+            }
+            
+            // Download schedule as CSV
+            function downloadSchedule() {
+                let csv = '時段,星期一,星期二,星期三,星期四,星期五,星期六\n';
+                
+                TIME_SLOTS.forEach((slot, timeIndex) => {
+                    if (slot.break) return;
+                    
+                    let row = `${formatTime(slot.start)}-${formatTime(slot.end)}`;
+                    
+                    DAYS.forEach((day, dayIndex) => {
+                        let cellContent = '';
+                        
+                        for (let subSlot = 0; subSlot < 4; subSlot++) {
+                            const key = `${dayIndex}-${timeIndex}-${subSlot}`;
+                            if (schedule[key]) {
+                                if (cellContent) cellContent += ' | ';
+                                cellContent += `${schedule[key].name} (${schedule[key].teacherCode}, ${SUB_SLOTS[subSlot]})`;
+                            }
+                        }
+                        
+                        row += ',"' + (cellContent || '-') + '"';
+                    });
+                    
+                    csv += row + '\n';
+                });
+                
+                // Create teacher-specific schedules
+                const teacherCodes = [...new Set(classes.map(c => c.teacherCode))];
+                
+                teacherCodes.forEach(teacherCode => {
+                    csv += '\n教師課表: ' + teacherCode + '\n';
+                    csv += '時段,星期一,星期二,星期三,星期四,星期五,星期六\n';
+                    
+                    TIME_SLOTS.forEach((slot, timeIndex) => {
+                        if (slot.break) return;
+                        
+                        let row = `${formatTime(slot.start)}-${formatTime(slot.end)}`;
+                        
+                        DAYS.forEach((day, dayIndex) => {
+                            let cellContent = '';
+                            
+                            for (let subSlot = 0; subSlot < 4; subSlot++) {
+                                const key = `${dayIndex}-${timeIndex}-${subSlot}`;
+                                if (schedule[key] && schedule[key].teacherCode === teacherCode) {
+                                    if (cellContent) cellContent += ' | ';
+                                    cellContent += `${schedule[key].name} (${SUB_SLOTS[subSlot]})`;
+                                }
+                            }
+                            
+                            row += ',"' + (cellContent || '-') + '"';
+                        });
+                        
+                        csv += row + '\n';
+                    });
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = '課表.csv';
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            // Copy schedule to clipboard
+            function copySchedule() {
+                let text = '課表摘要\n\n';
+                
+                // Create a summary of all classes
+                text += '所有班級:\n';
+                classes.forEach(cls => {
+                    text += `- ${cls.name} (${cls.teacherCode})\n`;
+                });
+                
+                text += '\n週課表:\n';
+                
+                TIME_SLOTS.forEach((slot, timeIndex) => {
+                    if (slot.break) return;
+                    
+                    text += `${formatTime(slot.start)}-${formatTime(slot.end)}: `;
+                    
+                    DAYS.forEach((day, dayIndex) => {
+                        let dayClasses = [];
+                        
+                        for (let subSlot = 0; subSlot < 4; subSlot++) {
+                            const key = `${dayIndex}-${timeIndex}-${subSlot}`;
+                            if (schedule[key]) {
+                                dayClasses.push(`${schedule[key].name} (${schedule[key].teacherCode}, ${SUB_SLOTS[subSlot]})`);
+                            }
+                        }
+                        
+                        if (dayClasses.length > 0) {
+                            text += `\n  ${day}: ${dayClasses.join(' | ')}`;
+                        }
+                    });
+                    
+                    text += '\n';
+                });
+                
+                // Create teacher-specific schedules
+                const teacherCodes = [...new Set(classes.map(c => c.teacherCode))];
+                
+                teacherCodes.forEach(teacherCode => {
+                    text += `\n教師課表: ${teacherCode}\n`;
+                    
+                    TIME_SLOTS.forEach((slot, timeIndex) => {
+                        if (slot.break) return;
+                        
+                        let hasClass = false;
+                        let timeText = `${formatTime(slot.start)}-${formatTime(slot.end)}: `;
+                        
+                        DAYS.forEach((day, dayIndex) => {
+                            let dayClasses = [];
+                            
+                            for (let subSlot = 0; subSlot < 4; subSlot++) {
+                                const key = `${dayIndex}-${timeIndex}-${subSlot}`;
+                                if (schedule[key] && schedule[key].teacherCode === teacherCode) {
+                                    dayClasses.push(`${schedule[key].name} (${SUB_SLOTS[subSlot]})`);
+                                    hasClass = true;
+                                }
+                            }
+                            
+                            if (dayClasses.length > 0) {
+                                timeText += `\n  ${day}: ${dayClasses.join(' | ')}`;
+                            }
+                        });
+                        
+                        if (hasClass) {
+                            text += timeText + '\n';
+                        }
+                    });
+                });
+                
+                navigator.clipboard.writeText(text)
+                    .then(() => alert('課表已複製到剪貼簿'))
+                    .catch(err => {
+                        console.error('複製失敗:', err);
+                        alert('複製失敗，請手動複製');
+                    });
+            }
+            
+            // Reset schedule
+            function resetSchedule() {
+                if (confirm('確定要重設課表嗎？所有資料將被清除。')) {
+                    schedule = {};
+                    renderSchedule();
+                    updateTeacherSchedules();
+                }
+            }
+            
+            // Initialize
+            initializeScheduleTable();
+            
+            // Load saved data if available
+            const savedData = localStorage.getItem('scheduleData');
+            if (savedData) {
+                const parsedData = JSON.parse(savedData);
+                classes = parsedData.classes;
+                schedule = parsedData.schedule;
+                nextColorIndex = parsedData.nextColorIndex || 0;
+                
+                renderClassBoxes();
+                renderSchedule();
+                updateTeacherSchedules();
+            }
+            
+            // Event listeners
+            addClassButton.addEventListener('click', addClass);
+            saveScheduleButton.addEventListener('click', saveSchedule);
+            loadScheduleButton.addEventListener('click', loadSchedule);
+            downloadScheduleButton.addEventListener('click', downloadSchedule);
+            copyScheduleButton.addEventListener('click', copySchedule);
+            resetScheduleButton.addEventListener('click', resetSchedule);
         });
-        document.querySelectorAll('.cell-box').forEach(cell => {
-          cell.ondrop = dropTask;
-          cell.ondragover = ev => ev.preventDefault();
-        });
-        updateDisplay();
-        alert('課表已載入！');
-      } else {
-        alert('尚未儲存過課表');
-      }
-    }
-
-    function downloadSchedule() {
-      const text = document.getElementById('teacherSchedules').textContent;
-      const blob = new Blob([text], { type: 'text/plain' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = 'teacher_schedule.txt';
-      link.click();
-    }
-
-    function copySchedule() {
-      navigator.clipboard.writeText(document.getElementById('teacherSchedules').textContent)
-        .then(() => alert('課表已複製到剪貼簿'))
-        .catch(err => alert('複製失敗: ' + err));
-    }
-
-    document.addEventListener('DOMContentLoaded', generateScheduleGrid);
-  </script>
+    </script>
 </body>
 </html>
