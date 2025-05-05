@@ -75,6 +75,9 @@
       50% { transform: translateX(20px); opacity: 0; }
       100% { transform: translateX(0); opacity: 1; }
     }
+    .control-buttons {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -91,6 +94,13 @@
 
   <h2>老師課表一覽</h2>
   <pre id="teacherSchedules"></pre>
+
+  <div class="control-buttons">
+    <button onclick="saveSchedule()">💾 儲存排程</button>
+    <button onclick="loadSchedule()">📂 載入排程</button>
+    <button onclick="downloadSchedule()">⬇️ 下載課表</button>
+    <button onclick="copySchedule()">📋 複製課表</button>
+  </div>
 
   <script>
     const taskBank = document.getElementById('task-bank');
@@ -169,7 +179,6 @@
       const time = ev.target.getAttribute('data-time');
       const label = ev.target.getAttribute('data-label');
 
-      // 檢查老師重複
       const allBoxes = document.querySelectorAll(`[data-day='${day}'][data-time='${time}']`);
       for (const box of allBoxes) {
         if (box.contains(task)) continue;
@@ -189,7 +198,6 @@
       task.setAttribute('data-usage', usage);
       if (usage >= 2) task.style.display = 'none';
 
-      // 更新老師課表
       if (!teacherSchedules[teacher]) teacherSchedules[teacher] = [];
       teacherSchedules[teacher].push(`${day} ${time} ${label}：${task.textContent}`);
       updateDisplay();
@@ -203,7 +211,48 @@
       document.getElementById('teacherSchedules').textContent = out.join("\n\n");
     }
 
-    generateScheduleGrid();
+    function saveSchedule() {
+      localStorage.setItem('taskBank', taskBank.innerHTML);
+      localStorage.setItem('schedule', schedule.innerHTML);
+      localStorage.setItem('teacherSchedules', JSON.stringify(teacherSchedules));
+      alert('課表已儲存！');
+    }
+
+    function loadSchedule() {
+      if (localStorage.getItem('taskBank')) {
+        taskBank.innerHTML = localStorage.getItem('taskBank');
+        schedule.innerHTML = localStorage.getItem('schedule');
+        Object.assign(teacherSchedules, JSON.parse(localStorage.getItem('teacherSchedules')));
+        document.querySelectorAll('.task').forEach(task => {
+          task.ondragstart = drag;
+        });
+        document.querySelectorAll('.cell-box').forEach(cell => {
+          cell.ondrop = dropTask;
+          cell.ondragover = ev => ev.preventDefault();
+        });
+        updateDisplay();
+        alert('課表已載入！');
+      } else {
+        alert('尚未儲存過課表');
+      }
+    }
+
+    function downloadSchedule() {
+      const text = document.getElementById('teacherSchedules').textContent;
+      const blob = new Blob([text], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'teacher_schedule.txt';
+      link.click();
+    }
+
+    function copySchedule() {
+      navigator.clipboard.writeText(document.getElementById('teacherSchedules').textContent)
+        .then(() => alert('課表已複製到剪貼簿'))
+        .catch(err => alert('複製失敗: ' + err));
+    }
+
+    document.addEventListener('DOMContentLoaded', generateScheduleGrid);
   </script>
 </body>
 </html>
