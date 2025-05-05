@@ -93,120 +93,117 @@
   <pre id="teacherSchedules"></pre>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const taskBank = document.getElementById('task-bank');
-      const schedule = document.getElementById('schedule');
-      const teacherSchedules = {};
-      let taskId = 0;
-      const colors = Array.from({length: 30}, (_, i) => `hsl(${i * 12}, 70%, 60%)`);
+    const taskBank = document.getElementById('task-bank');
+    const schedule = document.getElementById('schedule');
+    const teacherSchedules = {};
+    let taskId = 0;
+    const colors = Array.from({length: 30}, (_, i) => `hsl(${i * 12}, 70%, 60%)`);
 
-      const timeBlocks = [
-        "0900-1030", "1030-1200", "1200-1330(午餐)", "1330-1500",
-        "1500-1630", "1630-1800", "1800-1830(晚餐)", "1830-2000", "2000-2130"
-      ];
-      const days = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-      const boxLabels = ["2小", "3後", "4前", "4後"];
+    const timeBlocks = [
+      "0900-1030", "1030-1200", "1200-1330(午餐)", "1330-1500",
+      "1500-1630", "1630-1800", "1800-1830(晚餐)", "1830-2000", "2000-2130"
+    ];
+    const days = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+    const boxLabels = ["2小", "3後", "4前", "4後"];
 
-      function generateScheduleGrid() {
-        for (let t = 0; t < timeBlocks.length; t++) {
-          for (let d = 0; d < days.length; d++) {
-            const slot = document.createElement('div');
-            slot.className = 'time-slot';
-            const label = document.createElement('div');
-            label.className = 'label';
-            label.textContent = `${days[d]} ${timeBlocks[t]}`;
-            slot.appendChild(label);
+    function generateScheduleGrid() {
+      for (let t = 0; t < timeBlocks.length; t++) {
+        for (let d = 0; d < days.length; d++) {
+          const slot = document.createElement('div');
+          slot.className = 'time-slot';
+          const label = document.createElement('div');
+          label.className = 'label';
+          label.textContent = `${days[d]} ${timeBlocks[t]}`;
+          slot.appendChild(label);
 
-            const inner = document.createElement('div');
-            inner.className = 'cell-inner';
-            boxLabels.forEach(bl => {
-              const cell = document.createElement('div');
-              cell.className = 'cell-box';
-              cell.setAttribute('data-day', days[d]);
-              cell.setAttribute('data-time', timeBlocks[t]);
-              cell.setAttribute('data-label', bl);
-              cell.ondragover = ev => ev.preventDefault();
-              cell.ondrop = dropTask;
-              inner.appendChild(cell);
-            });
-            slot.appendChild(inner);
-            schedule.appendChild(slot);
-          }
+          const inner = document.createElement('div');
+          inner.className = 'cell-inner';
+          boxLabels.forEach(bl => {
+            const cell = document.createElement('div');
+            cell.className = 'cell-box';
+            cell.setAttribute('data-day', days[d]);
+            cell.setAttribute('data-time', timeBlocks[t]);
+            cell.setAttribute('data-label', bl);
+            cell.ondragover = ev => ev.preventDefault();
+            cell.ondrop = dropTask;
+            inner.appendChild(cell);
+          });
+          slot.appendChild(inner);
+          schedule.appendChild(slot);
+        }
+      }
+    }
+
+    function addClassTask() {
+      const name = document.getElementById('className').value.trim();
+      const code = document.getElementById('teacherCode').value.trim();
+      if (!name || !code || document.querySelectorAll('.task').length >= 30) return;
+
+      const task = document.createElement('div');
+      task.className = 'task';
+      task.draggable = true;
+      task.style.backgroundColor = colors[taskId % 30];
+      task.setAttribute('data-code', code);
+      task.setAttribute('data-usage', '0');
+      task.id = `task-${taskId++}`;
+      task.ondragstart = drag;
+
+      const editable = document.createElement('input');
+      editable.className = 'editable';
+      editable.value = name;
+      editable.onchange = () => updateDisplay();
+      task.appendChild(editable);
+      taskBank.appendChild(task);
+    }
+
+    function drag(ev) {
+      ev.dataTransfer.setData("text", ev.target.id);
+    }
+
+    function dropTask(ev) {
+      ev.preventDefault();
+      const id = ev.dataTransfer.getData("text");
+      const task = document.getElementById(id);
+      const teacher = task.getAttribute('data-code');
+      const day = ev.target.getAttribute('data-day');
+      const time = ev.target.getAttribute('data-time');
+      const label = ev.target.getAttribute('data-label');
+
+      // 檢查老師重複
+      const allBoxes = document.querySelectorAll(`[data-day='${day}'][data-time='${time}']`);
+      for (const box of allBoxes) {
+        if (box.contains(task)) continue;
+        const t = box.querySelector('.task');
+        if (t && t.getAttribute('data-code') === teacher) {
+          task.classList.add('animate-fail');
+          setTimeout(() => task.classList.remove('animate-fail'), 800);
+          return;
         }
       }
 
-      function addClassTask() {
-        const name = document.getElementById('className').value.trim();
-        const code = document.getElementById('teacherCode').value.trim();
-        if (!name || !code || document.querySelectorAll('.task').length >= 30) return;
+      ev.target.appendChild(task);
+      task.classList.add('animate-success');
+      setTimeout(() => task.classList.remove('animate-success'), 1000);
 
-        const task = document.createElement('div');
-        task.className = 'task';
-        task.draggable = true;
-        task.style.backgroundColor = colors[taskId % 30];
-        task.setAttribute('data-code', code);
-        task.setAttribute('data-usage', '0');
-        task.id = `task-${taskId++}`;
-        task.ondragstart = drag;
+      let usage = parseInt(task.getAttribute('data-usage')) + 1;
+      task.setAttribute('data-usage', usage);
+      if (usage >= 2) task.style.display = 'none';
 
-        const editable = document.createElement('input');
-        editable.className = 'editable';
-        editable.value = name;
-        editable.onchange = () => updateDisplay();
-        task.appendChild(editable);
-        taskBank.appendChild(task);
+      // 更新老師課表
+      if (!teacherSchedules[teacher]) teacherSchedules[teacher] = [];
+      teacherSchedules[teacher].push(`${day} ${time} ${label}：${task.textContent}`);
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      const out = [];
+      for (const [teacher, list] of Object.entries(teacherSchedules)) {
+        out.push(`老師 ${teacher}：\n` + list.join("\n"));
       }
+      document.getElementById('teacherSchedules').textContent = out.join("\n\n");
+    }
 
-      function drag(ev) {
-        ev.dataTransfer.setData("text", ev.target.id);
-      }
-
-      function dropTask(ev) {
-        ev.preventDefault();
-        const id = ev.dataTransfer.getData("text");
-        const task = document.getElementById(id);
-        const teacher = task.getAttribute('data-code');
-        const day = ev.target.getAttribute('data-day');
-        const time = ev.target.getAttribute('data-time');
-        const label = ev.target.getAttribute('data-label');
-
-        // 檢查老師重複
-        const allBoxes = document.querySelectorAll(`[data-day='${day}'][data-time='${time}']`);
-        for (const box of allBoxes) {
-          if (box.contains(task)) continue;
-          const t = box.querySelector('.task');
-          if (t && t.getAttribute('data-code') === teacher) {
-            task.classList.add('animate-fail');
-            setTimeout(() => task.classList.remove('animate-fail'), 800);
-            return;
-          }
-        }
-
-        ev.target.appendChild(task);
-        task.classList.add('animate-success');
-        setTimeout(() => task.classList.remove('animate-success'), 1000);
-
-        let usage = parseInt(task.getAttribute('data-usage')) + 1;
-        task.setAttribute('data-usage', usage);
-        if (usage >= 2) task.style.display = 'none';
-
-        // 更新老師課表
-        if (!teacherSchedules[teacher]) teacherSchedules[teacher] = [];
-        teacherSchedules[teacher].push(`${day} ${time} ${label}：${task.textContent}`);
-        updateDisplay();
-      }
-
-      function updateDisplay() {
-        const out = [];
-        for (const [teacher, list] of Object.entries(teacherSchedules)) {
-          out.push(`老師 ${teacher}：\n` + list.join("\n"));
-        }
-        document.getElementById('teacherSchedules').textContent = out.join("\n\n");
-      }
-
-      generateScheduleGrid();
-    });
+    generateScheduleGrid();
   </script>
 </body>
 </html>
- 
