@@ -1,99 +1,112 @@
-<!-- 重構後：加入次數顯示、格子不隱藏已放置、方格標示順序修正、美化UI、格子區折疊功能 -->
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>拖曳式排課系統</title>
-<style>
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    margin: 0; padding: 20px;
-    background-color: #f7f9fc;
-  }
-  h1 { text-align: center; color: #2c3e50; }
-  .task-inputs { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
-  input, button {
-    padding: 6px 10px; font-size: 14px;
-    border-radius: 4px; border: 1px solid #ccc;
-  }
-  button { background: #3498db; color: white; cursor: pointer; border: none; }
-  button:hover { background: #2980b9; }
-  #taskBank { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-  .task {
-    display: inline-flex; flex-direction: column; align-items: center;
-    padding: 5px; border-radius: 6px; color: white; font-weight: bold; cursor: grab;
-    min-width: 80px; text-align: center;
-  }
-  .task input {
-    width: 100%; border: none; background: transparent;
-    text-align: center; color: white; font-weight: bold;
-  }
-  .delete-btn {
-    background: none; border: none; color: white; font-size: 16px;
-    margin-top: 2px; cursor: pointer;
-  }
-  .schedule-grid {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 10px;
-  }
-  .time-slot {
-    background: #ffffff;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 4px;
-    position: relative;
-  }
-  .slot-header {
-    font-size: 12px;
-    font-weight: bold;
-    margin-bottom: 5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .cell-inner {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 3px;
-  }
-  .cell-box {
-    border: 1px dashed #999;
-    min-height: 50px;
-    background: #fefefe;
-    font-size: 11px;
-    text-align: center;
-  }
-  .hidden { display: none; }
-  .animate-success {
-    animation: zoomFlash 0.5s ease-in-out;
-  }
-  @keyframes zoomFlash {
-    0% { transform: scale(1); background: yellow; }
-    50% { transform: scale(1.1); background: lime; }
-    100% { transform: scale(1); background: inherit; }
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>拖曳式排課系統</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background-color: #f7f9fc; }
+    h1 { text-align: center; color: #2c3e50; }
+    .task-inputs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    input, button {
+      padding: 6px 10px; font-size: 14px;
+      border-radius: 4px; border: 1px solid #ccc;
+    }
+    button { background: #3498db; color: white; cursor: pointer; border: none; }
+    button:hover { background: #2980b9; }
+    #taskBank { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .task {
+      display: inline-flex; flex-direction: column; align-items: center;
+      padding: 5px; border-radius: 6px; color: white; font-weight: bold; cursor: grab;
+      min-width: 80px; text-align: center;
+    }
+    .task input {
+      width: 100%; border: none; background: transparent;
+      text-align: center; color: white; font-weight: bold;
+    }
+    .delete-btn {
+      background: none; border: none; color: white; font-size: 16px;
+      margin-top: 2px; cursor: pointer;
+    }
+    table { border-collapse: collapse; width: 100%; }
+    th, td {
+      border: 1px solid #ccc;
+      text-align: center;
+      vertical-align: top;
+      padding: 5px;
+    }
+    .cell-inner {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      gap: 3px;
+    }
+    .cell-box {
+      border: 1px dashed #999;
+      min-height: 50px;
+      background: #fff;
+      font-size: 11px;
+    }
+    .hidden { display: none; }
+    .slot-header {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+    }
+    .controls {
+      margin-top: 20px;
+      text-align: center;
+    }
+    pre {
+      white-space: pre-wrap;
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .animate-success {
+      animation: zoomFlash 0.5s ease-in-out;
+    }
+    @keyframes zoomFlash {
+      0% { transform: scale(1); background: yellow; }
+      50% { transform: scale(1.1); background: lime; }
+      100% { transform: scale(1); background: inherit; }
+    }
+  </style>
 </head>
 <body>
-<h1>拖曳式排課系統</h1>
-<div class="task-inputs">
-  <input id="className" placeholder="課程名稱">
-  <input id="teacherCode" placeholder="老師代號">
-  <button onclick="addTask()">新增課程</button>
-</div>
-<div id="taskBank"></div>
-<div class="schedule-grid" id="scheduleGrid"></div>
-<pre id="teacherView"></pre>
+  <h1>拖曳式排課系統</h1>
+  <div class="task-inputs">
+    <input id="className" placeholder="課程名稱">
+    <input id="teacherCode" placeholder="老師代號">
+    <button onclick="addTask()">新增課程</button>
+  </div>
+  <div id="taskBank"></div>
+  <table id="scheduleTable">
+    <thead>
+      <tr><th>時間＼星期</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>
+    </thead>
+    <tbody id="scheduleGrid"></tbody>
+  </table>
+
+  <div class="controls">
+    <button onclick="save()">💾 儲存</button>
+    <button onclick="load()">📂 載入</button>
+    <button onclick="download()">⬇️ 下載課表</button>
+    <button onclick="copy()">📋 複製課表</button>
+  </div>
+
+  <h2>老師課表</h2>
+  <pre id="teacherView"></pre>
+
 <script>
 const taskBank = document.getElementById('taskBank');
 const scheduleGrid = document.getElementById('scheduleGrid');
 const teacherView = document.getElementById('teacherView');
 const days = ['一','二','三','四','五','六'];
 const times = ['0900-1030','1030-1200','1200-1330(午)','1330-1500','1500-1630','1630-1800','1800-1830(晚)','1830-2000','2000-2130'];
-const slotLabels = ['2小','3後','4前','4後'];
+const slots = ['2小','3後','4前','4後'];
 const colors = Array.from({length: 30}, (_,i) => `hsl(${i*12},70%,60%)`);
 const usage = {}, data = {};
 let id = 0;
@@ -102,7 +115,6 @@ function addTask() {
   const name = document.getElementById('className').value.trim();
   const code = document.getElementById('teacherCode').value.trim();
   if (!name || !code || taskBank.children.length >= 30) return;
-
   const el = document.createElement('div');
   el.className = 'task';
   el.id = `task-${id}`;
@@ -116,7 +128,7 @@ function addTask() {
   input.onchange = () => { el.dataset.name = input.value; update(); };
 
   const usageInfo = document.createElement('small');
-  usageInfo.textContent = `剩 ${2} 次`;
+  usageInfo.textContent = `剩 2 次`;
   usageInfo.style.fontSize = '11px';
 
   const span = document.createElement('span');
@@ -140,29 +152,33 @@ function addTask() {
 
 function buildGrid() {
   for (let t of times) {
+    const row = document.createElement('tr');
+    const label = document.createElement('td');
+    const toggleBtn = document.createElement('button');
+    toggleBtn.textContent = '👁️';
+    toggleBtn.onclick = () => row.querySelectorAll('.cell-inner').forEach(c => c.classList.toggle('hidden'));
+    label.innerHTML = `<div class="slot-header">${t}</div>`;
+    label.appendChild(toggleBtn);
+    row.appendChild(label);
     for (let d of days) {
-      const cell = document.createElement('div');
-      cell.className = 'time-slot';
-      const header = document.createElement('div');
-      header.className = 'slot-header';
-      header.innerHTML = `<span>星期${d} ${t}</span> <button onclick="this.closest('.time-slot').querySelector('.cell-inner').classList.toggle('hidden')">👁️</button>`;
-      cell.appendChild(header);
+      const cell = document.createElement('td');
       const inner = document.createElement('div');
       inner.className = 'cell-inner';
-      for (let i = 0; i < 4; i++) {
+      for (let s of slots) {
         const box = document.createElement('div');
         box.className = 'cell-box';
         box.dataset.day = d;
         box.dataset.time = t;
-        box.dataset.slot = slotLabels[i];
+        box.dataset.slot = s;
+        box.innerText = s;
         box.ondragover = e => e.preventDefault();
         box.ondrop = drop;
-        box.innerText = slotLabels[i];
         inner.appendChild(box);
       }
       cell.appendChild(inner);
-      scheduleGrid.appendChild(cell);
+      row.appendChild(cell);
     }
+    scheduleGrid.appendChild(row);
   }
 }
 
@@ -184,16 +200,16 @@ function drop(e) {
     }
   }
 
-  e.target.innerHTML = slotLabels.find(s => e.target.dataset.slot === s);
+  e.target.innerText = e.target.dataset.slot;
   e.target.appendChild(task);
   task.classList.add('animate-success');
   setTimeout(() => task.classList.remove('animate-success'), 600);
 
-  if (!task.closest('#taskBank')) return;
   usage[taskId] = (usage[taskId] || 0) + 1;
   const remaining = 2 - usage[taskId];
-  task.querySelector('small').textContent = `剩 ${remaining} 次`;
-  if (usage[taskId] >= 2) task.style.display = 'none';
+  const info = task.querySelector('small');
+  if (info) info.textContent = `剩 ${remaining} 次`;
+  if (usage[taskId] >= 2 && taskBank.contains(task)) task.style.display = 'none';
 
   if (!data[code]) data[code] = [];
   data[code].push(`星期${day} ${time} ${e.target.dataset.slot}：${name}`);
@@ -208,6 +224,39 @@ function update() {
     .join('
 
 ');
+}
+
+function save() {
+  localStorage.setItem('taskBank', taskBank.innerHTML);
+  localStorage.setItem('scheduleGrid', scheduleGrid.innerHTML);
+  localStorage.setItem('teacherData', JSON.stringify(data));
+  alert('✅ 已儲存課表');
+}
+
+function load() {
+  taskBank.innerHTML = localStorage.getItem('taskBank');
+  scheduleGrid.innerHTML = localStorage.getItem('scheduleGrid');
+  Object.assign(data, JSON.parse(localStorage.getItem('teacherData')));
+  document.querySelectorAll('.task').forEach(t => {
+    t.ondragstart = e => e.dataTransfer.setData('text', t.id);
+  });
+  document.querySelectorAll('.cell-box').forEach(box => {
+    box.ondrop = drop;
+    box.ondragover = e => e.preventDefault();
+  });
+  update();
+}
+
+function download() {
+  const blob = new Blob([teacherView.textContent], {type: 'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '課表.txt';
+  a.click();
+}
+
+function copy() {
+  navigator.clipboard.writeText(teacherView.textContent).then(() => alert('📋 已複製課表'));
 }
 
 document.addEventListener('DOMContentLoaded', buildGrid);
