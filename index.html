@@ -100,7 +100,7 @@ function addTask() {
   el.appendChild(span);
   el.appendChild(usageInfo);
   el.appendChild(delBtn);
-  el.ondragstart = e => e.dataTransfer.setData('text', el.id);
+  el.ondragstart = e => e.dataTransfer.setData('text/plain', el.id);
 
   document.getElementById('taskBank').appendChild(el);
   usage[el.id] = 0;
@@ -150,10 +150,15 @@ function drop(e) {
     if (t && t.dataset.code === code && t !== task) return;
   }
 
+  const clone = task.cloneNode(true);
+  clone.draggable = false;
+  clone.querySelector('input').disabled = true;
+  clone.querySelector('.delete-btn').remove();
+
   e.target.innerText = slot;
-  e.target.appendChild(task);
-  task.classList.add('animate-success');
-  setTimeout(() => task.classList.remove('animate-success'), 600);
+  e.target.appendChild(clone);
+  clone.classList.add('animate-success');
+  setTimeout(() => clone.classList.remove('animate-success'), 600);
 
   usage[taskId] = (usage[taskId] || 0) + 1;
   const remain = 2 - usage[taskId];
@@ -167,8 +172,12 @@ function drop(e) {
 
 function update() {
   document.getElementById('teacherView').textContent = Object.entries(data)
-    .map(([code, list]) => `老師 ${code}：\n` + list.join('\n'))
-    .join('\n\n');
+    .map(([code, list]) => `老師 ${code}：
+` + list.join('
+'))
+    .join('
+
+');
 }
 
 document.addEventListener('DOMContentLoaded', buildTable);
