@@ -1,3 +1,4 @@
+
 <!-- 重構後：加入次數顯示、格子不隱藏已放置、方格標示順序修正、美化UI、格子區折疊功能 -->
 <!DOCTYPE html>
 <html lang="zh-Hant">
@@ -5,5 +6,212 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>拖曳式排課系統</title>
-...（省略中間相同部分）...
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0; padding: 20px;
+    background-color: #f7f9fc;
+  }
+  h1 { text-align: center; color: #2c3e50; }
+  .task-inputs { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+  input, button {
+    padding: 6px 10px; font-size: 14px;
+    border-radius: 4px; border: 1px solid #ccc;
+  }
+  button { background: #3498db; color: white; cursor: pointer; border: none; }
+  button:hover { background: #2980b9; }
+  #taskBank { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .task {
+    display: inline-flex; flex-direction: column; align-items: center;
+    padding: 5px; border-radius: 6px; color: white; font-weight: bold; cursor: grab;
+    min-width: 80px; text-align: center;
+  }
+  .task input {
+    width: 100%; border: none; background: transparent;
+    text-align: center; color: white; font-weight: bold;
+  }
+  .delete-btn {
+    background: none; border: none; color: white; font-size: 16px;
+    margin-top: 2px; cursor: pointer;
+  }
+  .schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+  }
+  .time-slot {
+    background: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 4px;
+    position: relative;
+  }
+  .slot-header {
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cell-inner {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 3px;
+  }
+  .cell-box {
+    border: 1px dashed #999;
+    min-height: 50px;
+    background: #fefefe;
+    font-size: 11px;
+    text-align: center;
+  }
+  .hidden { display: none; }
+  .animate-success {
+    animation: zoomFlash 0.5s ease-in-out;
+  }
+  @keyframes zoomFlash {
+    0% { transform: scale(1); background: yellow; }
+    50% { transform: scale(1.1); background: lime; }
+    100% { transform: scale(1); background: inherit; }
+  }
+</style>
+</head>
+<body>
+<h1>拖曳式排課系統</h1>
+<div class="task-inputs">
+  <input id="className" placeholder="課程名稱">
+  <input id="teacherCode" placeholder="老師代號">
+  <button onclick="addTask()">新增課程</button>
+</div>
+<div id="taskBank"></div>
+<div class="schedule-grid" id="scheduleGrid"></div>
+<pre id="teacherView"></pre>
+<script>
+const taskBank = document.getElementById('taskBank');
+const scheduleGrid = document.getElementById('scheduleGrid');
+const teacherView = document.getElementById('teacherView');
+const days = ['一','二','三','四','五','六'];
+const times = ['0900-1030','1030-1200','1200-1330(午)','1330-1500','1500-1630','1630-1800','1800-1830(晚)','1830-2000','2000-2130'];
+const slotLabels = ['2小','3後','4前','4後'];
+const colors = Array.from({length: 30}, (_,i) => `hsl(${i*12},70%,60%)`);
+const usage = {}, data = {};
+let id = 0;
+
+function addTask() {
+  const name = document.getElementById('className').value.trim();
+  const code = document.getElementById('teacherCode').value.trim();
+  if (!name || !code || taskBank.children.length >= 30) return;
+
+  const el = document.createElement('div');
+  el.className = 'task';
+  el.id = `task-${id}`;
+  el.draggable = true;
+  el.style.backgroundColor = colors[id % 30];
+  el.dataset.name = name;
+  el.dataset.code = code;
+
+  const input = document.createElement('input');
+  input.value = name;
+  input.onchange = () => { el.dataset.name = input.value; update(); };
+
+  const usageInfo = document.createElement('small');
+  usageInfo.textContent = `剩 ${2} 次`;
+  usageInfo.style.fontSize = '11px';
+
+  const span = document.createElement('span');
+  span.textContent = `(${code})`;
+
+  const delBtn = document.createElement('button');
+  delBtn.textContent = '×';
+  delBtn.className = 'delete-btn';
+  delBtn.onclick = e => { e.stopPropagation(); el.remove(); update(); };
+
+  el.appendChild(input);
+  el.appendChild(span);
+  el.appendChild(usageInfo);
+  el.appendChild(delBtn);
+  el.ondragstart = e => e.dataTransfer.setData('text', el.id);
+
+  usage[el.id] = 0;
+  taskBank.appendChild(el);
+  id++;
+}
+
+function buildGrid() {
+  for (let t of times) {
+    for (let d of days) {
+      const cell = document.createElement('div');
+      cell.className = 'time-slot';
+      const header = document.createElement('div');
+      header.className = 'slot-header';
+      header.innerHTML = `<span>星期${d} ${t}</span> <button onclick="this.closest('.time-slot').querySelector('.cell-inner').classList.toggle('hidden')">👁️</button>`;
+      cell.appendChild(header);
+      const inner = document.createElement('div');
+      inner.className = 'cell-inner';
+      for (let i = 0; i < 4; i++) {
+        const box = document.createElement('div');
+        box.className = 'cell-box';
+        box.dataset.day = d;
+        box.dataset.time = t;
+        box.dataset.slot = slotLabels[i];
+        box.ondragover = e => e.preventDefault();
+        box.ondrop = drop;
+        box.innerText = slotLabels[i];
+        inner.appendChild(box);
+      }
+      cell.appendChild(inner);
+      scheduleGrid.appendChild(cell);
+    }
+  }
+}
+
+function drop(e) {
+  e.preventDefault();
+  const taskId = e.dataTransfer.getData('text');
+  const task = document.getElementById(taskId);
+  const { code, name } = task.dataset;
+  const day = e.target.dataset.day;
+  const time = e.target.dataset.time;
+
+  const samePeriod = document.querySelectorAll(`[data-day='${day}'][data-time='${time}']`);
+  for (let box of samePeriod) {
+    const t = box.querySelector('.task');
+    if (t && t.dataset.code === code && t !== task) {
+      task.classList.add('animate-fail');
+      setTimeout(() => task.classList.remove('animate-fail'), 600);
+      return;
+    }
+  }
+
+  e.target.innerText = slotLabels.find(s => e.target.dataset.slot === s);
+  e.target.appendChild(task);
+  task.classList.add('animate-success');
+  setTimeout(() => task.classList.remove('animate-success'), 600);
+
+  if (!task.closest('#taskBank')) return;
+  usage[taskId] = (usage[taskId] || 0) + 1;
+  const remaining = 2 - usage[taskId];
+  task.querySelector('small').textContent = `剩 ${remaining} 次`;
+  if (usage[taskId] >= 2) task.style.display = 'none';
+
+  if (!data[code]) data[code] = [];
+  data[code].push(`星期${day} ${time} ${e.target.dataset.slot}：${name}`);
+  update();
+}
+
+function update() {
+  teacherView.textContent = Object.entries(data)
+    .map(([code, list]) => `老師 ${code}：
+` + list.join('
+'))
+    .join('
+
+');
+}
+
+document.addEventListener('DOMContentLoaded', buildGrid);
+</script>
+</body>
 </html>
