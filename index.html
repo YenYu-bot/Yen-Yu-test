@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -168,12 +167,8 @@ function drop(e) {
 
 function update() {
   document.getElementById('teacherView').textContent = Object.entries(data)
-    .map(([code, list]) => `老師 ${code}：
-` + list.join('
-'))
-    .join('
-
-');
+    .map(([code, list]) => `老師 ${code}：\n` + list.join('\n'))
+    .join('\n\n');
 }
 
 document.addEventListener('DOMContentLoaded', buildTable);
