@@ -5,9 +5,184 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>拖曳式排課系統</title>
-<!-- 省略 CSS/JS 這裡實際已確認為完整，從 Canvas 提取 -->
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f7f9fc;
+    padding: 20px;
+  }
+  h1 { text-align: center; }
+  .task-inputs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+  #taskBank { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .task {
+    display: inline-flex; flex-direction: column; align-items: center;
+    padding: 6px; border-radius: 6px; font-weight: bold; cursor: grab;
+    color: white; min-width: 80px;
+  }
+  .task input { width: 100%; background: transparent; border: none; color: white; text-align: center; font-weight: bold; }
+  .delete-btn { background: none; border: none; color: white; font-weight: bold; cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid #ccc; padding: 5px; text-align: center; vertical-align: top; }
+  .cell-inner {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 4px;
+  }
+  .cell-box {
+    border: 1px dashed #999;
+    min-height: 50px;
+    background: #fff;
+    font-size: 12px;
+  }
+  .hidden { display: none; }
+  .animate-success { animation: zoomFlash 0.5s ease-in-out; }
+  @keyframes zoomFlash {
+    0% { transform: scale(1); background: yellow; }
+    50% { transform: scale(1.1); background: lime; }
+    100% { transform: scale(1); background: inherit; }
+  }
+</style>
 </head>
 <body>
-<!-- 本體內容完整如 Canvas，以下會直接寫入 -->
+<h1>拖曳式排課系統</h1>
+<div class="task-inputs">
+  <input id="className" placeholder="課程名稱">
+  <input id="teacherCode" placeholder="老師代號">
+  <button onclick="addTask()">新增課程</button>
+</div>
+<div id="taskBank"></div>
+<table>
+  <thead>
+    <tr>
+      <th>時間＼星期</th>
+      <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th>
+    </tr>
+  </thead>
+  <tbody id="scheduleBody"></tbody>
+</table>
+<pre id="teacherView"></pre>
+<script>
+const days = ['一','二','三','四','五','六'];
+const times = ['0900-1030','1030-1200','1200-1330(午)','1330-1500','1500-1630','1630-1800','1800-1830(晚)','1830-2000','2000-2130'];
+const slots = ['2小','3後','4前','4後'];
+const usage = {}, data = {}, colors = Array.from({length: 30}, (_,i) => `hsl(${i*12},70%,60%)`);
+let id = 0;
+
+function addTask() {
+  const name = document.getElementById('className').value.trim();
+  const code = document.getElementById('teacherCode').value.trim();
+  if (!name || !code) return;
+  const el = document.createElement('div');
+  el.className = 'task';
+  el.id = `task-${id}`;
+  el.draggable = true;
+  el.style.backgroundColor = colors[id % 30];
+  el.dataset.name = name;
+  el.dataset.code = code;
+
+  const input = document.createElement('input');
+  input.value = name;
+  input.onchange = () => { el.dataset.name = input.value; update(); };
+
+  const span = document.createElement('span');
+  span.textContent = `(${code})`;
+
+  const usageInfo = document.createElement('small');
+  usageInfo.textContent = `剩 2 次`;
+  usageInfo.style.fontSize = '11px';
+
+  const delBtn = document.createElement('button');
+  delBtn.textContent = '×';
+  delBtn.className = 'delete-btn';
+  delBtn.onclick = e => { e.stopPropagation(); el.remove(); update(); };
+
+  el.appendChild(input);
+  el.appendChild(span);
+  el.appendChild(usageInfo);
+  el.appendChild(delBtn);
+  el.ondragstart = e => e.dataTransfer.setData('text', el.id);
+
+  document.getElementById('taskBank').appendChild(el);
+  usage[el.id] = 0;
+  id++;
+}
+
+function buildTable() {
+  const tbody = document.getElementById('scheduleBody');
+  times.forEach(time => {
+    const tr = document.createElement('tr');
+    const tdTime = document.createElement('td');
+    tdTime.innerHTML = `${time} <button onclick="this.parentElement.parentElement.querySelectorAll('.cell-inner').forEach(e=>e.classList.toggle('hidden'))">👁️</button>`;
+    tr.appendChild(tdTime);
+
+    days.forEach(day => {
+      const td = document.createElement('td');
+      const inner = document.createElement('div');
+      inner.className = 'cell-inner';
+      slots.forEach(slot => {
+        const box = document.createElement('div');
+        box.className = 'cell-box';
+        box.dataset.day = day;
+        box.dataset.time = time;
+        box.dataset.slot = slot;
+        box.innerText = slot;
+        box.ondragover = e => e.preventDefault();
+        box.ondrop = drop;
+        inner.appendChild(box);
+      });
+      td.appendChild(inner);
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+function drop(e) {
+  e.preventDefault();
+  const taskId = e.dataTransfer.getData('text');
+  const task = document.getElementById(taskId);
+  const { code, name } = task.dataset;
+  const { day, time, slot } = e.target.dataset;
+
+  const samePeriod = document.querySelectorAll(`[data-day='${day}'][data-time='${time}']`);
+  for (let box of samePeriod) {
+    const t = box.querySelector('.task');
+    if (t && t.dataset.code === code && t !== task) return;
+  }
+
+  const clone = task.cloneNode(true);
+  clone.draggable = false;
+  clone.querySelector('input').disabled = true;
+  const btn = clone.querySelector('.delete-btn');
+  if (btn) btn.remove();
+
+  e.target.innerText = slot;
+  e.target.appendChild(clone);
+  clone.classList.add('animate-success');
+  setTimeout(() => clone.classList.remove('animate-success'), 600);
+
+  usage[taskId] = (usage[taskId] || 0) + 1;
+  const remain = 2 - usage[taskId];
+  task.querySelector('small').textContent = `剩 ${remain} 次`;
+  if (usage[taskId] >= 2 && task.parentNode.id === 'taskBank') task.style.display = 'none';
+
+  if (!data[code]) data[code] = [];
+  data[code].push(`星期${day} ${time} ${slot}：${name}`);
+  update();
+}
+
+function update() {
+  document.getElementById('teacherView').textContent = Object.entries(data)
+    .map(([code, list]) => `老師 ${code}：
+` + list.join('
+'))
+    .join('
+
+');
+}
+
+document.addEventListener('DOMContentLoaded', buildTable);
+</script>
 </body>
 </html>
