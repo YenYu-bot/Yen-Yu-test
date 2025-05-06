@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -11,90 +12,17 @@
       padding: 20px;
       margin: 0;
     }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    .task-inputs {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    input[type="text"] {
-      padding: 6px;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-    button {
-      background-color: #3498db;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #2980b9;
-    }
-    .task {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 5px 10px;
-      border-radius: 5px;
-      margin: 5px;
-      cursor: grab;
-      color: #fff;
-      font-weight: bold;
-    }
-    .task input {
-      border: none;
-      background: transparent;
-      color: #fff;
-      font-weight: bold;
-      width: 60px;
-    }
-    .delete-btn {
-      background: none;
-      border: none;
-      color: #fff;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .schedule-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 5px;
-    }
-    .time-slot {
-      background-color: #fff;
-      border: 1px solid #ccc;
-      padding: 4px;
-    }
-    .label {
-      font-size: 12px;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-    .cell-inner {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      grid-template-rows: repeat(2, 1fr);
-      gap: 2px;
-    }
-    .cell-box {
-      border: 1px dashed #999;
-      min-height: 40px;
-      background: #fefefe;
-    }
-    .animate-success {
-      animation: zoomFlash 0.6s ease;
-    }
-    .animate-fail {
-      animation: bounceAway 0.6s ease;
-    }
+    .task { display: inline-flex; gap: 4px; align-items: center; padding: 5px 10px; margin: 5px;
+      color: #fff; font-weight: bold; border-radius: 5px; cursor: grab; }
+    .task input { background: transparent; color: white; border: none; width: 70px; }
+    .delete-btn { background: none; border: none; color: #fff; font-size: 16px; cursor: pointer; }
+    .cell-box { border: 1px dashed #999; min-height: 40px; background: #fefefe; }
+    .label { font-size: 12px; font-weight: bold; margin-bottom: 4px; }
+    .time-slot { background-color: #fff; border: 1px solid #ccc; padding: 4px; }
+    .cell-inner { display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 2px; }
+    .schedule-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
+    .animate-success { animation: zoomFlash 0.6s ease; }
+    .animate-fail { animation: bounceAway 0.6s ease; }
     @keyframes zoomFlash {
       0% { transform: scale(1); background: yellow; }
       50% { transform: scale(1.2); background: lime; }
@@ -105,40 +33,18 @@
       50% { transform: translateY(-10px) translateX(10px); opacity: 0.5; }
       100% { transform: translateY(0) translateX(0); opacity: 1; }
     }
-    .output, .controls {
-      margin-top: 20px;
-      text-align: center;
-    }
-    pre {
-      white-space: pre-wrap;
-      background: #fff;
-      padding: 10px;
-      border: 1px solid #ccc;
-      max-height: 300px;
-      overflow-y: auto;
-    }
   </style>
 </head>
 <body>
   <h1>拖曳式排課系統</h1>
-  <div class="task-inputs">
+  <div>
     <input id="className" placeholder="課程名稱"/>
     <input id="teacherCode" placeholder="老師代號"/>
     <button onclick="addTask()">新增課程</button>
   </div>
   <div id="taskBank"></div>
-  <h2>週課表</h2>
   <div class="schedule-grid" id="scheduleGrid"></div>
-  <h2>老師課表一覽</h2>
-  <div class="output">
-    <pre id="teacherView"></pre>
-  </div>
-  <div class="controls">
-    <button onclick="save()">💾 儲存</button>
-    <button onclick="load()">📂 載入</button>
-    <button onclick="download()">⬇️ 下載</button>
-    <button onclick="copy()">📋 複製</button>
-  </div>
+  <pre id="teacherView"></pre>
   <script>
     const taskBank = document.getElementById('taskBank');
     const scheduleGrid = document.getElementById('scheduleGrid');
@@ -151,9 +57,10 @@
     let id = 0;
 
     function addTask() {
-      const name = document.getElementById('className').value;
-      const code = document.getElementById('teacherCode').value;
+      const name = document.getElementById('className').value.trim();
+      const code = document.getElementById('teacherCode').value.trim();
       if (!name || !code || taskBank.children.length >= 30) return;
+
       const el = document.createElement('div');
       el.className = 'task';
       el.id = `task-${id}`;
@@ -161,8 +68,31 @@
       el.style.backgroundColor = colors[id % 30];
       el.dataset.name = name;
       el.dataset.code = code;
-      el.innerHTML = `<input value="${name}" onchange="this.parentNode.dataset.name=this.value"/><span>(${code})</span><button class='delete-btn' onclick='this.parentNode.remove()'>×</button>`;
+
+      const input = document.createElement('input');
+      input.value = `${name}`;
+      input.onchange = () => {
+        el.dataset.name = input.value;
+        update();
+      };
+
+      const span = document.createElement('span');
+      span.textContent = `(${code})`;
+
+      const delBtn = document.createElement('button');
+      delBtn.textContent = '×';
+      delBtn.className = 'delete-btn';
+      delBtn.onclick = e => {
+        e.stopPropagation();
+        el.remove();
+        update();
+      };
+
+      el.appendChild(input);
+      el.appendChild(span);
+      el.appendChild(delBtn);
       el.ondragstart = e => e.dataTransfer.setData('text', el.id);
+
       usage[el.id] = 0;
       taskBank.appendChild(el);
       id++;
@@ -202,8 +132,8 @@
       const { code, name } = task.dataset;
       const day = e.target.dataset.day;
       const time = e.target.dataset.time;
-      const samePeriod = document.querySelectorAll(`[data-day='${day}'][data-time='${time}']`);
 
+      const samePeriod = document.querySelectorAll(`[data-day='${day}'][data-time='${time}']`);
       for (let box of samePeriod) {
         const t = box.querySelector('.task');
         if (t && t.dataset.code === code && t !== task) {
@@ -229,39 +159,6 @@
       teacherView.textContent = Object.entries(data)
         .map(([code, list]) => `老師 ${code}：\n` + list.join('\n'))
         .join('\n\n');
-    }
-
-    function save() {
-      localStorage.setItem('taskBank', taskBank.innerHTML);
-      localStorage.setItem('scheduleGrid', scheduleGrid.innerHTML);
-      localStorage.setItem('teacherData', JSON.stringify(data));
-      alert('已儲存');
-    }
-
-    function load() {
-      taskBank.innerHTML = localStorage.getItem('taskBank');
-      scheduleGrid.innerHTML = localStorage.getItem('scheduleGrid');
-      Object.assign(data, JSON.parse(localStorage.getItem('teacherData')));
-      document.querySelectorAll('.task').forEach(t => {
-        t.ondragstart = e => e.dataTransfer.setData('text', t.id);
-      });
-      document.querySelectorAll('.cell-box').forEach(box => {
-        box.ondrop = drop;
-        box.ondragover = e => e.preventDefault();
-      });
-      update();
-    }
-
-    function download() {
-      const blob = new Blob([teacherView.textContent], {type: 'text/plain'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = '課表.txt';
-      a.click();
-    }
-
-    function copy() {
-      navigator.clipboard.writeText(teacherView.textContent).then(() => alert('已複製'));
     }
 
     document.addEventListener('DOMContentLoaded', buildGrid);
