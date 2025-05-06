@@ -1,6 +1,4 @@
-# 重新執行，因為環境已重置：建立符合條件的 index.html 檔案
-html_path = "/mnt/data/index.html"
-html_code = """<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
@@ -41,13 +39,29 @@ html_code = """<!DOCTYPE html>
       background-color: #2980b9;
     }
     .task {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       padding: 5px 10px;
       border-radius: 5px;
       margin: 5px;
       cursor: grab;
       color: #fff;
       font-weight: bold;
+    }
+    .task input {
+      border: none;
+      background: transparent;
+      color: #fff;
+      font-weight: bold;
+      width: 60px;
+    }
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
     }
     .schedule-grid {
       display: grid;
@@ -134,7 +148,6 @@ html_code = """<!DOCTYPE html>
     const slots = ['2小','3後','4前','4後'];
     const colors = Array.from({length: 30}, (_,i) => `hsl(${i*12},70%,60%)`);
     const usage = {}, data = {};
-
     let id = 0;
 
     function addTask() {
@@ -146,9 +159,9 @@ html_code = """<!DOCTYPE html>
       el.id = `task-${id}`;
       el.draggable = true;
       el.style.backgroundColor = colors[id % 30];
-      el.textContent = name;
       el.dataset.name = name;
       el.dataset.code = code;
+      el.innerHTML = `<input value="${name}" onchange="this.parentNode.dataset.name=this.value"/><span>(${code})</span><button class='delete-btn' onclick='this.parentNode.remove()'>×</button>`;
       el.ondragstart = e => e.dataTransfer.setData('text', el.id);
       usage[el.id] = 0;
       taskBank.appendChild(el);
@@ -214,8 +227,8 @@ html_code = """<!DOCTYPE html>
 
     function update() {
       teacherView.textContent = Object.entries(data)
-        .map(([code, list]) => `老師 ${code}：\\n` + list.join('\\n'))
-        .join('\\n\\n');
+        .map(([code, list]) => `老師 ${code}：\n` + list.join('\n'))
+        .join('\n\n');
     }
 
     function save() {
@@ -255,9 +268,3 @@ html_code = """<!DOCTYPE html>
   </script>
 </body>
 </html>
-"""
-
-with open(html_path, "w", encoding="utf-8") as f:
-    f.write(html_code)
-
-html_path
