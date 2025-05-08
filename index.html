@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>拖曳式排課系統</title>
   <style>
     /* 全局樣式 */
@@ -19,34 +19,51 @@
     }
     /* 輸入區 */
     #input-area {
-      display: flex; gap: 10px; padding: 12px;
-      background: #fff; border-radius: 8px;
+      display: flex;
+      gap: 10px;
+      padding: 12px;
+      background: #fff;
+      border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       margin-bottom: 20px;
     }
     #input-area input {
-      flex: 1; padding: 8px;
-      border: 1px solid #ccc; border-radius: 4px;
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
       font-size: 1em;
     }
     #input-area button {
-      padding: 8px 16px; background: #007bff;
-      color: #fff; border: none; border-radius: 4px;
-      cursor: pointer; transition: background 0.2s;
+      padding: 8px 16px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
     }
     #input-area button:hover { background: #0056b3; }
 
     /* 文字方塊區 */
     #boxes-area {
-      display: flex; flex-wrap: wrap; gap: 8px;
-      padding: 12px; background: #fff;
-      border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      min-height: 60px; margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      min-height: 60px;
+      margin-bottom: 20px;
     }
     .course-box {
-      position: relative; padding: 8px 12px;
-      border-radius: 6px; cursor: grab;
-      user-select: none; background: #e3f2fd;
+      position: relative;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: grab;
+      user-select: none;
+      background: #e3f2fd;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       transition: transform 0.2s, box-shadow 0.2s;
     }
@@ -55,68 +72,108 @@
       box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     .use-count {
-      position: absolute; top: 4px; right: 6px;
-      background: #dc3545; color: #fff;
-      border-radius: 12px; padding: 2px 6px;
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      background: #dc3545;
+      color: #fff;
+      border-radius: 12px;
+      padding: 2px 6px;
       font-size: 0.8em;
     }
 
     /* 隱藏開關按鈕 */
     #segment-toggles {
-      display: flex; flex-wrap: wrap; gap: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
       margin-bottom: 20px;
     }
     .toggle-btn {
-      padding: 6px 12px; border: 1px solid #007bff;
-      border-radius: 4px; background: #fff;
-      color: #007bff; cursor: pointer;
+      padding: 6px 12px;
+      border: 1px solid #007bff;
+      border-radius: 4px;
+      background: #fff;
+      color: #007bff;
+      cursor: pointer;
       transition: background 0.2s, color 0.2s;
     }
     .toggle-btn.active {
-      background: #007bff; color: #fff;
+      background: #007bff;
+      color: #fff;
     }
 
     /* 排課表格 */
     .timetable {
-      width: 100%; border-collapse: collapse;
-      background: #fff; border-radius: 8px;
-      overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       margin-bottom: 20px;
     }
-    .timetable th, .timetable td {
-      border: 1px solid #dee2e6; text-align: center;
-      vertical-align: middle; position: relative;
-      height: 60px; padding: 0;
+    .timetable th,
+    .timetable td {
+      border: 1px solid #dee2e6;
+      text-align: center;
+      vertical-align: middle;
+      position: relative;
+      height: 60px;
+      padding: 0;
     }
     .timetable th {
-      background: #007bff; color: #fff;
-      font-weight: normal; padding: 8px 0;
+      background: #007bff;
+      color: #fff;
+      font-weight: normal;
+      padding: 8px 0;
     }
     .timetable tr:nth-child(even) td {
       background: #f8f9fa;
     }
     .sub-slot {
-      position: absolute; width: 50%; height: 50%;
-      box-sizing: border-box; border: 1px dashed #aaa;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.75em; color: #495057;
-      text-align: center; background: rgba(0,123,255,0.05);
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      box-sizing: border-box;
+      border: 1px dashed #aaa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75em;
+      color: #495057;
+      text-align: center;
+      background: rgba(0,123,255,0.05);
       border-radius: 4px;
     }
 
     /* 動畫 */
     .anim-success { animation: success-scale 0.4s ease forwards; }
-    @keyframes success-scale { 0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)} }
+    @keyframes success-scale {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
     .anim-flash { animation: flash 0.5s ease; }
-    @keyframes flash { 0%,100%{opacity:1}50%{opacity:0.2} }
+    @keyframes flash {
+      0%,100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
     .anim-fail { animation: shake 0.5s ease; }
-    @keyframes shake { 0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)} }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%,60% { transform: translateX(-5px); }
+      40%,80% { transform: translateX(5px); }
+    }
 
     /* 操作按鈕 */
     .action-btn {
-      padding: 8px 16px; border: none;
-      border-radius: 4px; margin-right: 8px;
-      cursor: pointer; transition: background 0.2s;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      margin-right: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
     }
     .action-btn.save { background: #28a745; color: #fff; }
     .action-btn.save:hover { background: #218838; }
@@ -128,78 +185,103 @@
 </head>
 <body>
   <h1>拖曳式排課系統</h1>
+
   <!-- 輸入區 -->
   <div id="input-area">
     <input id="className" placeholder="班級名稱" />
     <input id="teacherCode" placeholder="教師代號" />
     <button id="addBoxBtn">新增文字方塊</button>
   </div>
+
   <!-- 文字方塊區 -->
   <div id="boxes-area"></div>
+
   <!-- 時間段隱藏開關 -->
   <div id="segment-toggles"></div>
+
   <!-- 周表 -->
   <table class="timetable" id="timetable">
     <thead>
-      <tr><th>時段 / 星期</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>
+      <tr>
+        <th>時段 / 星期</th>
+        <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th>
+      </tr>
     </thead>
     <tbody id="timetable-body"></tbody>
   </table>
+
   <!-- 操作按鈕 -->
   <div>
     <button class="action-btn save" id="saveBtn">儲存</button>
     <button class="action-btn download" id="downloadBtn">下載課表</button>
     <button class="action-btn copy" id="copyBtn">複製課表</button>
   </div>
-  <script>
-    const MAX_BOXES = 30, MAX_USES = 2;
-    const timeSlots = [
-      '09:00-10:30','10:30-12:00',
-      '12:00-13:30(Lunch)','13:30-15:00',
-      '15:00-16:30','16:30-18:00',
-      '18:00-18:30(Dinner)','18:30-20:00','20:00-21:30'
-    ];
-    const days = ['一','二','三','四','五','六'];
-    const subs = ['2小','3後','4前','4後'];
 
+  <script>
+    // 常數
+    const MAX_BOXES = 30;
+    const MAX_USES = 2;
+    // 時段與子格
+    const timeSlots = [
+      '09:00-10:30', '10:30-12:00',
+      '12:00-13:30 (午休)', '13:30-15:00',
+      '15:00-16:30', '16:30-18:00',
+      '18:00-18:30 (晚餐)', '18:30-20:00', '20:00-21:30'
+    ];
+    const days = ['一', '二', '三', '四', '五', '六'];
+    const subs = ['2小', '3後', '4前', '4後'];
+
+    // DOM 事件
     document.getElementById('addBoxBtn').addEventListener('click', addCourseBox);
     document.getElementById('saveBtn').addEventListener('click', saveState);
     document.getElementById('downloadBtn').addEventListener('click', downloadSchedule);
     document.getElementById('copyBtn').addEventListener('click', copySchedule);
 
-    buildTimetable(); loadState();
+    let draggedBox = null;
+
+    // 初始化
+    buildTimetable();
+    loadState();
 
     function buildTimetable() {
-      const body = document.getElementById('timetable-body');
+      const tbody = document.getElementById('timetable-body');
+      // 建立每行
       timeSlots.forEach(slot => {
         const tr = document.createElement('tr');
-        const th = document.createElement('th'); th.textContent = slot; tr.appendChild(th);
+        const th = document.createElement('th');
+        th.textContent = slot;
+        tr.appendChild(th);
+
         days.forEach(day => {
           const td = document.createElement('td');
           td.dataset.slot = slot;
           td.dataset.day = day;
           td.style.position = 'relative';
-          subs.forEach((sub,i) => {
+          // 建立四個子格
+          subs.forEach((sub, idx) => {
             const cell = document.createElement('div');
             cell.className = 'sub-slot';
             cell.dataset.slot = slot;
             cell.dataset.day = day;
             cell.dataset.sub = sub;
             cell.textContent = sub;
-            if(i===0){cell.style.top='2px';cell.style.left='2px';}
-            if(i===1){cell.style.top='2px';cell.style.right='2px';}
-            if(i===2){cell.style.bottom='2px';cell.style.left='2px';}
-            if(i===3){cell.style.bottom='2px';cell.style.right='2px';}
-            cell.addEventListener('dragover', e=>e.preventDefault());
+            // 定位
+            if (idx === 0) { cell.style.top = '2px'; cell.style.left = '2px'; }
+            if (idx === 1) { cell.style.top = '2px'; cell.style.right = '2px'; }
+            if (idx === 2) { cell.style.bottom = '2px'; cell.style.left = '2px'; }
+            if (idx === 3) { cell.style.bottom = '2px'; cell.style.right = '2px'; }
+            // 允許放置
+            cell.addEventListener('dragover', e => e.preventDefault());
             cell.addEventListener('drop', handleDrop);
             td.appendChild(cell);
           });
           tr.appendChild(td);
         });
-        body.appendChild(tr);
+        tbody.appendChild(tr);
       });
-      // 建立隱藏開關
-      const tog = document.getElementById('segment-toggles');
+
+      // 建立隱藏開關按鈕
+      const toggleContainer = document.getElementById('segment-toggles');
       timeSlots.forEach(slot => {
         const btn = document.createElement('button');
         btn.className = 'toggle-btn';
@@ -207,37 +289,46 @@
         btn.dataset.slot = slot;
         btn.addEventListener('click', e => {
           const s = e.currentTarget.dataset.slot;
-          document.querySelectorAll(`tr th:first-child, tr td:nth-child(1), tr td[data-slot='${s}']`).forEach(el => {
-            if(el.tagName==='TH') return;
-            el.style.display = el.style.display === 'none' ? '' : 'none';
+          document.querySelectorAll(`tbody tr`).forEach(row => {
+            if (row.firstChild.textContent === s) {
+              row.style.display = row.style.display === 'none' ? '' : 'none';
+            }
           });
           e.currentTarget.classList.toggle('active');
         });
-        tog.appendChild(btn);
+        toggleContainer.appendChild(btn);
       });
     }
 
     function addCourseBox() {
       const name = document.getElementById('className').value.trim();
       const code = document.getElementById('teacherCode').value.trim();
-      if(!name||!code) return;
-      const area = document.getElementById('boxes-area');
-      if(area.children.length >= MAX_BOXES) return alert('文字方塊已達上限');
+      if (!name || !code) return;
+      const container = document.getElementById('boxes-area');
+      if (container.children.length >= MAX_BOXES) {
+        return alert('文字方塊已達上限');
+      }
       const box = document.createElement('div');
-      box.className = 'course-box'; box.draggable = true; box.dataset.remaining = MAX_USES;
+      box.className = 'course-box';
+      box.draggable = true;
+      box.dataset.remaining = MAX_USES;
       box.textContent = `${name} (${code})`;
+      // 顯示剩餘次數
       const count = document.createElement('span');
-      count.className = 'use-count'; count.textContent = MAX_USES;
+      count.className = 'use-count';
+      count.textContent = MAX_USES;
       box.appendChild(count);
-      box.addEventListener('dragstart', e => { draggedBox = e.currentTarget; });
-      area.appendChild(box);
+      box.addEventListener('dragstart', e => {
+        draggedBox = e.currentTarget;
+      });
+      container.appendChild(box);
     }
 
-    let draggedBox = null;
     function handleDrop(e) {
       e.preventDefault();
       const target = e.currentTarget;
-      if([...target.children].some(c=>c.classList.contains('course-box') && extractCode(c.textContent) === extractCode(draggedBox.textContent))) {
+      // 衝突檢查
+      if ([...target.children].some(c => c.classList.contains('course-box') && extractCode(c.textContent) === extractCode(draggedBox.textContent))) {
         animateFail(draggedBox);
         return;
       }
@@ -246,34 +337,61 @@
       decrementUse(draggedBox);
     }
 
-    function extractCode(txt) {
-      const m = txt.match(/\(([^)]+)\)$/);
+    function extractCode(text) {
+      const m = text.match(/\(([^)]+)\)$/);
       return m ? m[1] : '';
     }
-    function animateSuccess(b) { b.classList.add('anim-success','anim-flash'); setTimeout(() => b.classList.remove('anim-success','anim-flash'), 500); }
-    function animateFail(b) { b.classList.add('anim-fail'); setTimeout(() => b.classList.remove('anim-fail'), 500); }
-    function decrementUse(b) {
-      let r = --b.dataset.remaining;
-      b.querySelector('.use-count').textContent = r;
-      const up = document.getElementById('boxes-area');
-      if(r <= 0 && up.contains(b)) up.removeChild(b);
+
+    function animateSuccess(box) {
+      box.classList.add('anim-success', 'anim-flash');
+      setTimeout(() => box.classList.remove('anim-success', 'anim-flash'), 500);
+    }
+
+    function animateFail(box) {
+      box.classList.add('anim-fail');
+      setTimeout(() => box.classList.remove('anim-fail'), 500);
+    }
+
+    function decrementUse(box) {
+      let rem = parseInt(box.dataset.remaining) - 1;
+      box.dataset.remaining = rem;
+      box.querySelector('.use-count').textContent = rem;
+      // 使用完畢後從上方區域移除
+      const topContainer = document.getElementById('boxes-area');
+      if (rem <= 0 && topContainer.contains(box)) {
+        topContainer.removeChild(box);
+      }
     }
 
     function saveState() {
       const data = {
         boxes: [...document.querySelectorAll('.course-box')].map(b => ({ text: b.firstChild.textContent, remaining: b.dataset.remaining })),
-        placements: []
+        // placements 可擴充
       };
-      localStorage.scheduleData = JSON.stringify(data);
+      localStorage.setItem('scheduleData', JSON.stringify(data));
       alert('已儲存');
     }
-    function loadState() { if(!localStorage.scheduleData) return; }
-    function downloadSchedule() {
-      const blob = new Blob([localStorage.scheduleData||''], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); a.href = url; a.download = 'schedule.json'; a.click(); URL.revokeObjectURL(url);
+
+    function loadState() {
+      const raw = localStorage.getItem('scheduleData');
+      if (!raw) return;
+      // TODO: 還原 boxes 與 placements
     }
-    function copySchedule() { navigator.clipboard.writeText(localStorage.scheduleData||''); alert('已複製'); }
+
+    function downloadSchedule() {
+      const blob = new Blob([localStorage.getItem('scheduleData') || ''], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'schedule.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function copySchedule() {
+      navigator.clipboard.writeText(localStorage.getItem('scheduleData') || '');
+      alert('已複製');
+    }
   </script>
 </body>
 </html>
