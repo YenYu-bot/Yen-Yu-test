@@ -1,397 +1,918 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>拖曳式排課系統</title>
-  <style>
-    /* 全局樣式 */
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: #f5f7fa;
-      color: #333;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    /* 輸入區 */
-    #input-area {
-      display: flex;
-      gap: 10px;
-      padding: 12px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-    #input-area input {
-      flex: 1;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      font-size: 1em;
-    }
-    #input-area button {
-      padding: 8px 16px;
-      background: #007bff;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    #input-area button:hover { background: #0056b3; }
-
-    /* 文字方塊區 */
-    #boxes-area {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      padding: 12px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      min-height: 60px;
-      margin-bottom: 20px;
-    }
-    .course-box {
-      position: relative;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: grab;
-      user-select: none;
-      background: #e3f2fd;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .course-box:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-    .use-count {
-      position: absolute;
-      top: 4px;
-      right: 6px;
-      background: #dc3545;
-      color: #fff;
-      border-radius: 12px;
-      padding: 2px 6px;
-      font-size: 0.8em;
-    }
-
-    /* 隱藏開關按鈕 */
-    #segment-toggles {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 20px;
-    }
-    .toggle-btn {
-      padding: 6px 12px;
-      border: 1px solid #007bff;
-      border-radius: 4px;
-      background: #fff;
-      color: #007bff;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-    }
-    .toggle-btn.active {
-      background: #007bff;
-      color: #fff;
-    }
-
-    /* 排課表格 */
-    .timetable {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-    .timetable th,
-    .timetable td {
-      border: 1px solid #dee2e6;
-      text-align: center;
-      vertical-align: middle;
-      position: relative;
-      height: 60px;
-      padding: 0;
-    }
-    .timetable th {
-      background: #007bff;
-      color: #fff;
-      font-weight: normal;
-      padding: 8px 0;
-    }
-    .timetable tr:nth-child(even) td {
-      background: #f8f9fa;
-    }
-    .sub-slot {
-      position: absolute;
-      width: 50%;
-      height: 50%;
-      box-sizing: border-box;
-      border: 1px dashed #aaa;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75em;
-      color: #495057;
-      text-align: center;
-      background: rgba(0,123,255,0.05);
-      border-radius: 4px;
-    }
-
-    /* 動畫 */
-    .anim-success { animation: success-scale 0.4s ease forwards; }
-    @keyframes success-scale {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.2); }
-      100% { transform: scale(1); }
-    }
-    .anim-flash { animation: flash 0.5s ease; }
-    @keyframes flash {
-      0%,100% { opacity: 1; }
-      50% { opacity: 0.2; }
-    }
-    .anim-fail { animation: shake 0.5s ease; }
-    @keyframes shake {
-      0%,100% { transform: translateX(0); }
-      20%,60% { transform: translateX(-5px); }
-      40%,80% { transform: translateX(5px); }
-    }
-
-    /* 操作按鈕 */
-    .action-btn {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 4px;
-      margin-right: 8px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .action-btn.save { background: #28a745; color: #fff; }
-    .action-btn.save:hover { background: #218838; }
-    .action-btn.download { background: #17a2b8; color: #fff; }
-    .action-btn.download:hover { background: #117a8b; }
-    .action-btn.copy { background: #ffc107; color: #212529; }
-    .action-btn.copy:hover { background: #d39e00; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拖曳式排課系統</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --error-color: #e74c3c;
+            --break-color: #f5f5f5;
+            --grid-border: #ddd;
+        }
+        
+        * {
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        
+        .input-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        
+        input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .class-boxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
+        }
+        
+        .class-box {
+            padding: 10px;
+            border-radius: 4px;
+            cursor: move;
+            user-select: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+            min-width: 150px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .class-box[data-uses="2"] {
+            display: none;
+        }
+        
+        .class-box::after {
+            content: attr(data-uses) "/2";
+            position: absolute;
+            top: 2px;
+            right: 5px;
+            font-size: 10px;
+            opacity: 0.7;
+        }
+        
+        .schedule-grid {
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+        
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 1000px;
+        }
+        
+        th, td {
+            border: 1px solid var(--grid-border);
+            padding: 0;
+            text-align: center;
+            position: relative;
+        }
+        
+        th {
+            background-color: #f0f0f0;
+            padding: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .time-cell {
+            width: 100px;
+            background-color: #f0f0f0;
+            padding: 5px;
+            font-size: 0.9em;
+        }
+        
+        .break-cell {
+            background-color: var(--break-color);
+            padding: 5px;
+            font-style: italic;
+            color: #888;
+        }
+        
+        .schedule-cell {
+            height: 80px;
+            min-width: 150px;
+        }
+        
+        .cell-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            height: 100%;
+            width: 100%;
+        }
+        
+        .cell-grid > div {
+            border: 1px dashed #eee;
+            padding: 2px;
+            font-size: 0.8em;
+            color: #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+            position: relative;
+        }
+        
+        .teacher-schedules {
+            margin-top: 30px;
+        }
+        
+        .teacher-schedule {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+        
+        /* Animation Classes */
+        .success-animation {
+            animation: successPlacement 0.6s ease-in-out;
+            transform-origin: center;
+            z-index: 100;
+        }
+        
+        .error-animation {
+            animation: errorPlacement 0.5s ease-in-out;
+            transform-origin: center;
+        }
+        
+        @keyframes successPlacement {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); filter: brightness(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes errorPlacement {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .dragging {
+            opacity: 0.7;
+            transform: scale(1.05);
+        }
+        
+        .class-in-grid {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            margin: 0;
+            font-size: 0.85em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 2px;
+        }
+        
+        .highlight {
+            background-color: rgba(46, 204, 113, 0.2);
+        }
+    </style>
 </head>
 <body>
-  <h1>拖曳式排課系統</h1>
-
-  <!-- 輸入區 -->
-  <div id="input-area">
-    <input id="className" placeholder="班級名稱" />
-    <input id="teacherCode" placeholder="教師代號" />
-    <button id="addBoxBtn">新增文字方塊</button>
-  </div>
-
-  <!-- 文字方塊區 -->
-  <div id="boxes-area"></div>
-
-  <!-- 時間段隱藏開關 -->
-  <div id="segment-toggles"></div>
-
-  <!-- 周表 -->
-  <table class="timetable" id="timetable">
-    <thead>
-      <tr>
-        <th>時段 / 星期</th>
-        <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th>
-      </tr>
-    </thead>
-    <tbody id="timetable-body"></tbody>
-  </table>
-
-  <!-- 操作按鈕 -->
-  <div>
-    <button class="action-btn save" id="saveBtn">儲存</button>
-    <button class="action-btn download" id="downloadBtn">下載課表</button>
-    <button class="action-btn copy" id="copyBtn">複製課表</button>
-  </div>
-
-  <script>
-    // 常數
-    const MAX_BOXES = 30;
-    const MAX_USES = 2;
-    // 時段與子格
-    const timeSlots = [
-      '09:00-10:30', '10:30-12:00',
-      '12:00-13:30 (午休)', '13:30-15:00',
-      '15:00-16:30', '16:30-18:00',
-      '18:00-18:30 (晚餐)', '18:30-20:00', '20:00-21:30'
-    ];
-    const days = ['一', '二', '三', '四', '五', '六'];
-    const subs = ['2小', '3後', '4前', '4後'];
-
-    // DOM 事件
-    document.getElementById('addBoxBtn').addEventListener('click', addCourseBox);
-    document.getElementById('saveBtn').addEventListener('click', saveState);
-    document.getElementById('downloadBtn').addEventListener('click', downloadSchedule);
-    document.getElementById('copyBtn').addEventListener('click', copySchedule);
-
-    let draggedBox = null;
-
-    // 初始化
-    buildTimetable();
-    loadState();
-
-    function buildTimetable() {
-      const tbody = document.getElementById('timetable-body');
-      // 建立每行
-      timeSlots.forEach(slot => {
-        const tr = document.createElement('tr');
-        const th = document.createElement('th');
-        th.textContent = slot;
-        tr.appendChild(th);
-
-        days.forEach(day => {
-          const td = document.createElement('td');
-          td.dataset.slot = slot;
-          td.dataset.day = day;
-          td.style.position = 'relative';
-          // 建立四個子格
-          subs.forEach((sub, idx) => {
-            const cell = document.createElement('div');
-            cell.className = 'sub-slot';
-            cell.dataset.slot = slot;
-            cell.dataset.day = day;
-            cell.dataset.sub = sub;
-            cell.textContent = sub;
-            // 定位
-            if (idx === 0) { cell.style.top = '2px'; cell.style.left = '2px'; }
-            if (idx === 1) { cell.style.top = '2px'; cell.style.right = '2px'; }
-            if (idx === 2) { cell.style.bottom = '2px'; cell.style.left = '2px'; }
-            if (idx === 3) { cell.style.bottom = '2px'; cell.style.right = '2px'; }
-            // 允許放置
-            cell.addEventListener('dragover', e => e.preventDefault());
-            cell.addEventListener('drop', handleDrop);
-            td.appendChild(cell);
-          });
-          tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
-      });
-
-      // 建立隱藏開關按鈕
-      const toggleContainer = document.getElementById('segment-toggles');
-      timeSlots.forEach(slot => {
-        const btn = document.createElement('button');
-        btn.className = 'toggle-btn';
-        btn.textContent = slot;
-        btn.dataset.slot = slot;
-        btn.addEventListener('click', e => {
-          const s = e.currentTarget.dataset.slot;
-          document.querySelectorAll(`tbody tr`).forEach(row => {
-            if (row.firstChild.textContent === s) {
-              row.style.display = row.style.display === 'none' ? '' : 'none';
+    <div class="container">
+        <h1>拖曳式排課系統</h1>
+        
+        <div class="input-section">
+            <input type="text" id="className" placeholder="班級名稱" />
+            <input type="text" id="teacherCode" placeholder="老師代號" />
+            <button id="addClass">新增班級</button>
+            <button id="saveSchedule">儲存課表</button>
+            <button id="loadSchedule">載入課表</button>
+            <button id="downloadSchedule">下載課表</button>
+            <button id="copySchedule">複製課表</button>
+        </div>
+        
+        <div class="class-boxes" id="classBoxes"></div>
+        
+        <div class="schedule-grid">
+            <table id="scheduleTable">
+                <thead>
+                    <tr>
+                        <th>時間</th>
+                        <th>星期一</th>
+                        <th>星期二</th>
+                        <th>星期三</th>
+                        <th>星期四</th>
+                        <th>星期五</th>
+                        <th>星期六</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleBody">
+                    <!-- Will be filled by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="teacher-schedules" id="teacherSchedules">
+            <h2>教師個人課表</h2>
+            <!-- Will be filled by JavaScript -->
+        </div>
+        
+        <div class="action-buttons">
+            <button id="resetSchedule">重設課表</button>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Constants
+            const COLORS = [
+                "#3498db", "#2ecc71", "#9b59b6", "#e74c3c", "#f1c40f", 
+                "#1abc9c", "#34495e", "#e67e22", "#95a5a6", "#d35400",
+                "#27ae60", "#8e44ad", "#16a085", "#f39c12", "#2980b9",
+                "#c0392b", "#7f8c8d", "#2c3e50", "#e84393", "#6c5ce7",
+                "#00cec9", "#55efc4", "#fab1a0", "#ff7675", "#fd79a8",
+                "#a29bfe", "#ffeaa7", "#81ecec", "#74b9ff", "#636e72"
+            ];
+            
+            const TIME_SLOTS = [
+                { start: "0900", end: "1030" },
+                { start: "1030", end: "1200" },
+                { start: "1200", end: "1330", break: true, label: "午餐休息" },
+                { start: "1330", end: "1500" },
+                { start: "1500", end: "1630" },
+                { start: "1630", end: "1800" },
+                { start: "1800", end: "1830", break: true, label: "晚餐休息" },
+                { start: "1830", end: "2000" },
+                { start: "2000", end: "2130" }
+            ];
+            
+            const DAYS = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+            const SUB_SLOTS = ["2小", "3後", "4前", "4後"];
+            
+            // State
+            let classes = [];
+            let schedule = {};
+            let nextColorIndex = 0;
+            
+            // DOM Elements
+            const classBoxesContainer = document.getElementById('classBoxes');
+            const scheduleBody = document.getElementById('scheduleBody');
+            const teacherSchedulesContainer = document.getElementById('teacherSchedules');
+            const addClassButton = document.getElementById('addClass');
+            const saveScheduleButton = document.getElementById('saveSchedule');
+            const loadScheduleButton = document.getElementById('loadSchedule');
+            const downloadScheduleButton = document.getElementById('downloadSchedule');
+            const copyScheduleButton = document.getElementById('copySchedule');
+            const resetScheduleButton = document.getElementById('resetSchedule');
+            
+            // Initialize schedule table
+            function initializeScheduleTable() {
+                scheduleBody.innerHTML = '';
+                
+                TIME_SLOTS.forEach((slot, index) => {
+                    const row = document.createElement('tr');
+                    
+                    const timeCell = document.createElement('td');
+                    timeCell.className = 'time-cell';
+                    timeCell.textContent = `${formatTime(slot.start)}-${formatTime(slot.end)}`;
+                    row.appendChild(timeCell);
+                    
+                    if (slot.break) {
+                        const breakCell = document.createElement('td');
+                        breakCell.className = 'break-cell';
+                        breakCell.colSpan = DAYS.length;
+                        breakCell.textContent = slot.label;
+                        row.appendChild(breakCell);
+                    } else {
+                        DAYS.forEach((day, dayIndex) => {
+                            const cell = document.createElement('td');
+                            cell.className = 'schedule-cell';
+                            cell.dataset.day = dayIndex;
+                            cell.dataset.timeSlot = index;
+                            
+                            const cellGrid = document.createElement('div');
+                            cellGrid.className = 'cell-grid';
+                            
+                            for (let i = 0; i < 4; i++) {
+                                const subCell = document.createElement('div');
+                                subCell.dataset.subSlot = i;
+                                subCell.textContent = SUB_SLOTS[i];
+                                subCell.dataset.day = dayIndex;
+                                subCell.dataset.timeSlot = index;
+                                subCell.addEventListener('dragover', handleDragOver);
+                                subCell.addEventListener('drop', handleDrop);
+                                subCell.addEventListener('dragenter', handleDragEnter);
+                                subCell.addEventListener('dragleave', handleDragLeave);
+                                cellGrid.appendChild(subCell);
+                            }
+                            
+                            cell.appendChild(cellGrid);
+                            row.appendChild(cell);
+                        });
+                    }
+                    
+                    scheduleBody.appendChild(row);
+                });
             }
-          });
-          e.currentTarget.classList.toggle('active');
+            
+            // Format time for display
+            function formatTime(time) {
+                return time.substring(0, 2) + ':' + time.substring(2);
+            }
+            
+            // Add new class
+            function addClass() {
+                const classNameInput = document.getElementById('className');
+                const teacherCodeInput = document.getElementById('teacherCode');
+                
+                const className = classNameInput.value.trim();
+                const teacherCode = teacherCodeInput.value.trim();
+                
+                if (!className || !teacherCode) {
+                    alert('請輸入班級名稱和老師代號');
+                    return;
+                }
+                
+                if (classes.length >= 30) {
+                    alert('最多只能新增30個班級');
+                    return;
+                }
+                
+                const color = COLORS[nextColorIndex % COLORS.length];
+                nextColorIndex++;
+                
+                const classData = {
+                    id: Date.now(),
+                    name: className,
+                    teacherCode: teacherCode,
+                    color: color,
+                    uses: 0
+                };
+                
+                classes.push(classData);
+                renderClassBoxes();
+                updateTeacherSchedules();
+                
+                classNameInput.value = '';
+                teacherCodeInput.value = '';
+            }
+            
+            // Render class boxes
+            function renderClassBoxes() {
+                classBoxesContainer.innerHTML = '';
+                
+                classes.forEach(classData => {
+                    const box = document.createElement('div');
+                    box.className = 'class-box';
+                    box.textContent = `${classData.name} (${classData.teacherCode})`;
+                    box.style.backgroundColor = classData.color;
+                    box.style.color = getContrastColor(classData.color);
+                    box.draggable = true;
+                    box.dataset.id = classData.id;
+                    box.dataset.name = classData.name;
+                    box.dataset.teacherCode = classData.teacherCode;
+                    box.dataset.color = classData.color;
+                    box.dataset.uses = classData.uses;
+                    
+                    box.addEventListener('dragstart', handleDragStart);
+                    box.addEventListener('dragend', handleDragEnd);
+                    box.contentEditable = true;
+                    box.addEventListener('blur', function() {
+                        const newText = box.textContent;
+                        const match = newText.match(/^(.+)\s*\((.+)\)$/);
+                        if (match) {
+                            const classObj = classes.find(c => c.id == classData.id);
+                            if (classObj) {
+                                classObj.name = match[1].trim();
+                                classObj.teacherCode = match[2].trim();
+                                renderClassBoxes();
+                                updateTeacherSchedules();
+                            }
+                        } else {
+                            box.textContent = `${classData.name} (${classData.teacherCode})`;
+                        }
+                    });
+                    
+                    classBoxesContainer.appendChild(box);
+                });
+            }
+            
+            // Get contrast color for text based on background color
+            function getContrastColor(hexColor) {
+                // Convert hex to RGB
+                const r = parseInt(hexColor.substr(1, 2), 16);
+                const g = parseInt(hexColor.substr(3, 2), 16);
+                const b = parseInt(hexColor.substr(5, 2), 16);
+                
+                // Calculate brightness
+                const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                
+                return brightness > 128 ? '#000' : '#fff';
+            }
+            
+            // Drag event handlers
+            function handleDragStart(e) {
+                if (this.dataset.uses >= 2) {
+                    e.preventDefault();
+                    return;
+                }
+                
+                this.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', JSON.stringify({
+                    id: this.dataset.id,
+                    name: this.dataset.name,
+                    teacherCode: this.dataset.teacherCode,
+                    color: this.dataset.color,
+                    fromCell: this.parentNode.classList.contains('cell-grid') ? 
+                             `${this.parentNode.parentNode.dataset.day}-${this.parentNode.parentNode.dataset.timeSlot}-${this.dataset.subSlot}` : null
+                }));
+                
+                e.dataTransfer.effectAllowed = 'move';
+            }
+            
+            function handleDragEnd() {
+                this.classList.remove('dragging');
+            }
+            
+            function handleDragOver(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+            }
+            
+            function handleDragEnter(e) {
+                this.classList.add('highlight');
+            }
+            
+            function handleDragLeave(e) {
+                this.classList.remove('highlight');
+            }
+            
+            function handleDrop(e) {
+                e.preventDefault();
+                this.classList.remove('highlight');
+                
+                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                const day = this.dataset.day;
+                const timeSlot = this.dataset.timeSlot;
+                const subSlot = this.dataset.subSlot;
+                const cellKey = `${day}-${timeSlot}-${subSlot}`;
+                
+                // Check if the teacher already has a class at this time on this day
+                const hasTeacherConflict = checkTeacherConflict(data.teacherCode, day, timeSlot, cellKey);
+                
+                if (hasTeacherConflict) {
+                    showErrorAnimation(data.id);
+                    return;
+                }
+                
+                // If the class is already placed somewhere, remove it from there
+                if (data.fromCell) {
+                    delete schedule[data.fromCell];
+                }
+                
+                // Find if there's already a class in the target cell
+                if (schedule[cellKey]) {
+                    const existingClass = classes.find(c => c.id == schedule[cellKey].id);
+                    if (existingClass) {
+                        existingClass.uses--;
+                    }
+                }
+                
+                // Place the class in the new cell
+                schedule[cellKey] = {
+                    id: data.id,
+                    name: data.name,
+                    teacherCode: data.teacherCode,
+                    color: data.color
+                };
+                
+                const classObj = classes.find(c => c.id == data.id);
+                if (classObj && !data.fromCell) {
+                    classObj.uses++;
+                }
+                
+                renderSchedule();
+                renderClassBoxes();
+                updateTeacherSchedules();
+                
+                showSuccessAnimation(data.id, this);
+            }
+            
+            // Check if the teacher already has a class at this time on this day
+            function checkTeacherConflict(teacherCode, day, timeSlot, excludeCell) {
+                for (const key in schedule) {
+                    if (key !== excludeCell) {
+                        const [cellDay, cellTime, cellSub] = key.split('-');
+                        if (cellDay === day && cellTime === timeSlot && schedule[key].teacherCode === teacherCode) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+            
+            // Render schedule based on current state
+            function renderSchedule() {
+                // Reset all cells to their original state
+                document.querySelectorAll('.cell-grid > div').forEach(el => {
+                    const subSlotIndex = el.dataset.subSlot;
+                    el.innerHTML = SUB_SLOTS[subSlotIndex];
+                });
+                
+                // Add class boxes to their cells
+                for (const key in schedule) {
+                    const [day, timeSlot, subSlot] = key.split('-');
+                    const classData = schedule[key];
+                    
+                    const cell = document.querySelector(`.cell-grid > div[data-day="${day}"][data-time-slot="${timeSlot}"][data-sub-slot="${subSlot}"]`);
+                    if (cell) {
+                        const box = document.createElement('div');
+                        box.className = 'class-box class-in-grid';
+                        box.textContent = `${classData.name} (${classData.teacherCode})`;
+                        box.style.backgroundColor = classData.color;
+                        box.style.color = getContrastColor(classData.color);
+                        box.draggable = true;
+                        box.dataset.id = classData.id;
+                        box.dataset.name = classData.name;
+                        box.dataset.teacherCode = classData.teacherCode;
+                        box.dataset.color = classData.color;
+                        box.dataset.subSlot = subSlot;
+                        
+                        box.addEventListener('dragstart', handleDragStart);
+                        box.addEventListener('dragend', handleDragEnd);
+                        
+                        cell.innerHTML = '';
+                        cell.appendChild(box);
+                    }
+                }
+            }
+            
+            // Update teacher schedules
+            function updateTeacherSchedules() {
+                teacherSchedulesContainer.innerHTML = '<h2>教師個人課表</h2>';
+                
+                // Get unique teacher codes
+                const teacherCodes = [...new Set(classes.map(c => c.teacherCode))];
+                
+                teacherCodes.forEach(teacherCode => {
+                    const teacherSchedule = document.createElement('div');
+                    teacherSchedule.className = 'teacher-schedule';
+                    
+                    const title = document.createElement('h3');
+                    title.textContent = `教師: ${teacherCode}`;
+                    teacherSchedule.appendChild(title);
+                    
+                    const table = document.createElement('table');
+                    
+                    // Create header row
+                    const thead = document.createElement('thead');
+                    const headerRow = document.createElement('tr');
+                    
+                    const thTime = document.createElement('th');
+                    thTime.textContent = '時間';
+                    headerRow.appendChild(thTime);
+                    
+                    DAYS.forEach(day => {
+                        const th = document.createElement('th');
+                        th.textContent = day;
+                        headerRow.appendChild(th);
+                    });
+                    
+                    thead.appendChild(headerRow);
+                    table.appendChild(thead);
+                    
+                    // Create body rows
+                    const tbody = document.createElement('tbody');
+                    
+                    TIME_SLOTS.forEach((slot, timeIndex) => {
+                        if (slot.break) return;
+                        
+                        const row = document.createElement('tr');
+                        
+                        const timeCell = document.createElement('td');
+                        timeCell.className = 'time-cell';
+                        timeCell.textContent = `${formatTime(slot.start)}-${formatTime(slot.end)}`;
+                        row.appendChild(timeCell);
+                        
+                        DAYS.forEach((day, dayIndex) => {
+                            const cell = document.createElement('td');
+                            
+                            let hasClass = false;
+                            for (let subSlot = 0; subSlot < 4; subSlot++) {
+                                const key = `${dayIndex}-${timeIndex}-${subSlot}`;
+                                if (schedule[key] && schedule[key].teacherCode === teacherCode) {
+                                    const classInfo = document.createElement('div');
+                                    classInfo.textContent = `${schedule[key].name} (${SUB_SLOTS[subSlot]})`;
+                                    classInfo.style.backgroundColor = schedule[key].color;
+                                    classInfo.style.color = getContrastColor(schedule[key].color);
+                                    classInfo.style.padding = '2px';
+                                    classInfo.style.margin = '2px';
+                                    classInfo.style.borderRadius = '3px';
+                                    cell.appendChild(classInfo);
+                                    hasClass = true;
+                                }
+                            }
+                            
+                            if (!hasClass) {
+                                cell.textContent = '-';
+                            }
+                            
+                            row.appendChild(cell);
+                        });
+                        
+                        tbody.appendChild(row);
+                    });
+                    
+                    table.appendChild(tbody);
+                    teacherSchedule.appendChild(table);
+                    
+                    teacherSchedulesContainer.appendChild(teacherSchedule);
+                });
+            }
+            
+            // Animation functions
+            function showSuccessAnimation(classId, targetCell) {
+                const classBox = document.querySelector(`.class-box[data-id="${classId}"]`);
+                if (classBox) {
+                    classBox.classList.add('success-animation');
+                    setTimeout(() => {
+                        classBox.classList.remove('success-animation');
+                    }, 600);
+                }
+            }
+            
+            function showErrorAnimation(classId) {
+                const classBox = document.querySelector(`.class-box[data-id="${classId}"]`);
+                if (classBox) {
+                    classBox.classList.add('error-animation');
+                    setTimeout(() => {
+                        classBox.classList.remove('error-animation');
+                    }, 500);
+                }
+            }
+            
+            // Save schedule to localStorage
+            function saveSchedule() {
+                const data = {
+                    classes: classes,
+                    schedule: schedule,
+                    nextColorIndex: nextColorIndex
+                };
+                
+                localStorage.setItem('scheduleData', JSON.stringify(data));
+                alert('課表已儲存');
+            }
+            
+            // Load schedule from localStorage
+            function loadSchedule() {
+                const data = localStorage.getItem('scheduleData');
+                if (data) {
+                    const parsedData = JSON.parse(data);
+                    classes = parsedData.classes;
+                    schedule = parsedData.schedule;
+                    nextColorIndex = parsedData.nextColorIndex || 0;
+                    
+                    renderClassBoxes();
+                    renderSchedule();
+                    updateTeacherSchedules();
+                    alert('課表已載入');
+                } else {
+                    alert('沒有已儲存的課表');
+                }
+            }
+            
+            // Download schedule as CSV
+            function downloadSchedule() {
+                let csv = '時段,星期一,星期二,星期三,星期四,星期五,星期六\n';
+                
+                TIME_SLOTS.forEach((slot, timeIndex) => {
+                    if (slot.break) return;
+                    
+                    let row = `${formatTime(slot.start)}-${formatTime(slot.end)}`;
+                    
+                    DAYS.forEach((day, dayIndex) => {
+                        let cellContent = '';
+                        
+                        for (let subSlot = 0; subSlot < 4; subSlot++) {
+                            const key = `${dayIndex}-${timeIndex}-${subSlot}`;
+                            if (schedule[key]) {
+                                if (cellContent) cellContent += ' | ';
+                                cellContent += `${schedule[key].name} (${schedule[key].teacherCode}, ${SUB_SLOTS[subSlot]})`;
+                            }
+                        }
+                        
+                        row += ',"' + (cellContent || '-') + '"';
+                    });
+                    
+                    csv += row + '\n';
+                });
+                
+                // Create teacher-specific schedules
+                const teacherCodes = [...new Set(classes.map(c => c.teacherCode))];
+                
+                teacherCodes.forEach(teacherCode => {
+                    csv += '\n教師課表: ' + teacherCode + '\n';
+                    csv += '時段,星期一,星期二,星期三,星期四,星期五,星期六\n';
+                    
+                    TIME_SLOTS.forEach((slot, timeIndex) => {
+                        if (slot.break) return;
+                        
+                        let row = `${formatTime(slot.start)}-${formatTime(slot.end)}`;
+                        
+                        DAYS.forEach((day, dayIndex) => {
+                            let cellContent = '';
+                            
+                            for (let subSlot = 0; subSlot < 4; subSlot++) {
+                                const key = `${dayIndex}-${timeIndex}-${subSlot}`;
+                                if (schedule[key] && schedule[key].teacherCode === teacherCode) {
+                                    if (cellContent) cellContent += ' | ';
+                                    cellContent += `${schedule[key].name} (${SUB_SLOTS[subSlot]})`;
+                                }
+                            }
+                            
+                            row += ',"' + (cellContent || '-') + '"';
+                        });
+                        
+                        csv += row + '\n';
+                    });
+                });
+                
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = '課表.csv';
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            // Copy schedule to clipboard
+            function copySchedule() {
+                let text = '課表摘要\n\n';
+                
+                // Create a summary of all classes
+                text += '所有班級:\n';
+                classes.forEach(cls => {
+                    text += `- ${cls.name} (${cls.teacherCode})\n`;
+                });
+                
+                text += '\n週課表:\n';
+                
+                TIME_SLOTS.forEach((slot, timeIndex) => {
+                    if (slot.break) return;
+                    
+                    text += `${formatTime(slot.start)}-${formatTime(slot.end)}: `;
+                    
+                    DAYS.forEach((day, dayIndex) => {
+                        let dayClasses = [];
+                        
+                        for (let subSlot = 0; subSlot < 4; subSlot++) {
+                            const key = `${dayIndex}-${timeIndex}-${subSlot}`;
+                            if (schedule[key]) {
+                                dayClasses.push(`${schedule[key].name} (${schedule[key].teacherCode}, ${SUB_SLOTS[subSlot]})`);
+                            }
+                        }
+                        
+                        if (dayClasses.length > 0) {
+                            text += `\n  ${day}: ${dayClasses.join(' | ')}`;
+                        }
+                    });
+                    
+                    text += '\n';
+                });
+                
+                // Create teacher-specific schedules
+                const teacherCodes = [...new Set(classes.map(c => c.teacherCode))];
+                
+                teacherCodes.forEach(teacherCode => {
+                    text += `\n教師課表: ${teacherCode}\n`;
+                    
+                    TIME_SLOTS.forEach((slot, timeIndex) => {
+                        if (slot.break) return;
+                        
+                        let hasClass = false;
+                        let timeText = `${formatTime(slot.start)}-${formatTime(slot.end)}: `;
+                        
+                        DAYS.forEach((day, dayIndex) => {
+                            let dayClasses = [];
+                            
+                            for (let subSlot = 0; subSlot < 4; subSlot++) {
+                                const key = `${dayIndex}-${timeIndex}-${subSlot}`;
+                                if (schedule[key] && schedule[key].teacherCode === teacherCode) {
+                                    dayClasses.push(`${schedule[key].name} (${SUB_SLOTS[subSlot]})`);
+                                    hasClass = true;
+                                }
+                            }
+                            
+                            if (dayClasses.length > 0) {
+                                timeText += `\n  ${day}: ${dayClasses.join(' | ')}`;
+                            }
+                        });
+                        
+                        if (hasClass) {
+                            text += timeText + '\n';
+                        }
+                    });
+                });
+                
+                navigator.clipboard.writeText(text)
+                    .then(() => alert('課表已複製到剪貼簿'))
+                    .catch(err => {
+                        console.error('複製失敗:', err);
+                        alert('複製失敗，請手動複製');
+                    });
+            }
+            
+            // Reset schedule
+            function resetSchedule() {
+                if (confirm('確定要重設課表嗎？所有資料將被清除。')) {
+                    schedule = {};
+                    renderSchedule();
+                    updateTeacherSchedules();
+                }
+            }
+            
+            // Initialize
+            initializeScheduleTable();
+            
+            // Load saved data if available
+            const savedData = localStorage.getItem('scheduleData');
+            if (savedData) {
+                const parsedData = JSON.parse(savedData);
+                classes = parsedData.classes;
+                schedule = parsedData.schedule;
+                nextColorIndex = parsedData.nextColorIndex || 0;
+                
+                renderClassBoxes();
+                renderSchedule();
+                updateTeacherSchedules();
+            }
+            
+            // Event listeners
+            addClassButton.addEventListener('click', addClass);
+            saveScheduleButton.addEventListener('click', saveSchedule);
+            loadScheduleButton.addEventListener('click', loadSchedule);
+            downloadScheduleButton.addEventListener('click', downloadSchedule);
+            copyScheduleButton.addEventListener('click', copySchedule);
+            resetScheduleButton.addEventListener('click', resetSchedule);
         });
-        toggleContainer.appendChild(btn);
-      });
-    }
-
-    function addCourseBox() {
-      const name = document.getElementById('className').value.trim();
-      const code = document.getElementById('teacherCode').value.trim();
-      if (!name || !code) return;
-      const container = document.getElementById('boxes-area');
-      if (container.children.length >= MAX_BOXES) {
-        return alert('文字方塊已達上限');
-      }
-      const box = document.createElement('div');
-      box.className = 'course-box';
-      box.draggable = true;
-      box.dataset.remaining = MAX_USES;
-      box.textContent = `${name} (${code})`;
-      // 顯示剩餘次數
-      const count = document.createElement('span');
-      count.className = 'use-count';
-      count.textContent = MAX_USES;
-      box.appendChild(count);
-      box.addEventListener('dragstart', e => {
-        draggedBox = e.currentTarget;
-      });
-      container.appendChild(box);
-    }
-
-    function handleDrop(e) {
-      e.preventDefault();
-      const target = e.currentTarget;
-      // 衝突檢查
-      if ([...target.children].some(c => c.classList.contains('course-box') && extractCode(c.textContent) === extractCode(draggedBox.textContent))) {
-        animateFail(draggedBox);
-        return;
-      }
-      target.appendChild(draggedBox);
-      animateSuccess(draggedBox);
-      decrementUse(draggedBox);
-    }
-
-    function extractCode(text) {
-      const m = text.match(/\(([^)]+)\)$/);
-      return m ? m[1] : '';
-    }
-
-    function animateSuccess(box) {
-      box.classList.add('anim-success', 'anim-flash');
-      setTimeout(() => box.classList.remove('anim-success', 'anim-flash'), 500);
-    }
-
-    function animateFail(box) {
-      box.classList.add('anim-fail');
-      setTimeout(() => box.classList.remove('anim-fail'), 500);
-    }
-
-    function decrementUse(box) {
-      let rem = parseInt(box.dataset.remaining) - 1;
-      box.dataset.remaining = rem;
-      box.querySelector('.use-count').textContent = rem;
-      // 使用完畢後從上方區域移除
-      const topContainer = document.getElementById('boxes-area');
-      if (rem <= 0 && topContainer.contains(box)) {
-        topContainer.removeChild(box);
-      }
-    }
-
-    function saveState() {
-      const data = {
-        boxes: [...document.querySelectorAll('.course-box')].map(b => ({ text: b.firstChild.textContent, remaining: b.dataset.remaining })),
-        // placements 可擴充
-      };
-      localStorage.setItem('scheduleData', JSON.stringify(data));
-      alert('已儲存');
-    }
-
-    function loadState() {
-      const raw = localStorage.getItem('scheduleData');
-      if (!raw) return;
-      // TODO: 還原 boxes 與 placements
-    }
-
-    function downloadSchedule() {
-      const blob = new Blob([localStorage.getItem('scheduleData') || ''], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'schedule.json';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function copySchedule() {
-      navigator.clipboard.writeText(localStorage.getItem('scheduleData') || '');
-      alert('已複製');
-    }
-  </script>
+    </script>
 </body>
 </html>
