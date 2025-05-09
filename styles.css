@@ -1,0 +1,190 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.input-section {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+input[type="text"] {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    flex: 1;
+}
+
+button {
+    padding: 8px 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+.class-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.class-box {
+    padding: 10px;
+    border-radius: 4px;
+    cursor: move;
+    user-select: none;
+    position: relative;
+    min-width: 150px;
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.class-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.schedule-section {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow-x: auto;
+}
+
+.schedule-grid {
+    display: flex;
+    min-width: 1000px;
+}
+
+.time-column, .day-column {
+    min-width: 150px;
+}
+
+.header-cell {
+    background: #f0f0f0;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    border: 1px solid #ddd;
+}
+
+.time-slots, .day-slots {
+    display: flex;
+    flex-direction: column;
+}
+
+.time-slot, .schedule-slot {
+    height: 60px;
+    border: 1px solid #ddd;
+    padding: 5px;
+    position: relative;
+}
+
+.schedule-slot {
+    background: #fff;
+}
+
+.schedule-slot.break {
+    background: #ffe6e6;
+}
+
+.schedule-slot.occupied {
+    background: #e6ffe6;
+}
+
+/* 動畫類別 */
+@keyframes successAnimation {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+@keyframes errorAnimation {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+    100% { transform: translateX(0); }
+}
+
+@keyframes flash {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.success {
+    animation: successAnimation 0.5s ease, flash 1s ease 2;
+}
+
+.error {
+    animation: errorAnimation 0.5s ease;
+}
+
+.teacher-schedules {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+/* 拖曳相關樣式 */
+.dragging {
+    opacity: 0.5;
+    transform: scale(1.1);
+}
+
+.drag-over {
+    background-color: #e6ffe6;
+    border: 2px dashed #4CAF50;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .input-group {
+        flex-direction: column;
+    }
+    
+    .schedule-grid {
+        min-width: 800px;
+    }
+} 
