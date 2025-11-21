@@ -3,301 +3,475 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>凸透鏡成像原理互動演示</title>
+    <title>理化證道錄：波光篇</title>
     <style>
+        :root {
+            --primary-color: #00eaff; /* 青色真氣光芒 */
+            --secondary-color: #ff3333; /* 血色/心魔光芒 */
+            --bg-color: #121212; /* 深淵背景 */
+            --panel-bg: rgba(20, 20, 30, 0.9);
+            --border-style: 2px solid var(--primary-color);
+        }
+
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f2f5;
+            font-family: 'Noto Serif TC', 'Microsoft JhengHei', serif;
+            background-color: var(--bg-color);
+            background-image: url('https://www.transparenttextures.com/patterns/black-linen.png'); /* 增加一點質感 */
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            min-height: 100vh;
         }
-        h2 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .container {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        canvas {
-            border: 1px solid #ddd;
-            background: #fff;
-            cursor: crosshair;
-            border-radius: 8px;
-        }
-        #status-panel {
-            margin-top: 15px;
-            padding: 15px;
-            background-color: #e9ecef;
-            border-radius: 8px;
-            border-left: 5px solid #007bff;
-        }
-        #status-panel h3 {
-            margin: 0 0 10px 0;
-            font-size: 1.1em;
-            color: #007bff;
-        }
-        #status-panel p {
-            margin: 5px 0;
-            color: #555;
-            font-size: 0.95em;
-        }
-        .highlight {
+
+        h1, h2, h3 {
+            text-shadow: 0 0 10px var(--primary-color);
             font-weight: bold;
-            color: #d9534f;
         }
-        .instruction {
-            color: #666;
-            font-style: italic;
-            margin-bottom: 15px;
-            text-align: center;
+
+        h1 { margin-bottom: 10px; }
+
+        /* 修仙風格容器 */
+        .container {
+            background-color: var(--panel-bg);
+            border: var(--border-style);
+            box-shadow: 0 0 20px rgba(0, 234, 255, 0.3);
+            border-radius: 10px;
+            padding: 25px;
+            max-width: 800px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        /* 狀態欄 */
+        .status-panel {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            border-bottom: 1px dashed #555;
+            padding-bottom: 15px;
+        }
+
+        .status-item {
+            margin: 5px 10px;
+            font-size: 1.1em;
+        }
+
+        .highlight { color: var(--primary-color); font-weight: bold; }
+        .danger { color: var(--secondary-color); font-weight: bold; }
+
+        /* 戰鬥區域 (題目顯示) */
+        #battle-stage { display: none; /* 初始隱藏 */ }
+
+        .question-box {
+            font-size: 1.2em;
+            margin-bottom: 25px;
+            line-height: 1.6;
+            border-left: 5px solid var(--secondary-color);
+            padding-left: 15px;
+            background: rgba(255, 51, 51, 0.1);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* 修仙按鈕 */
+        .xianxia-btn {
+            background: linear-gradient(to bottom, #2b2b2b, #1a1a1a);
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 15px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+            font-family: inherit;
+        }
+
+        .xianxia-btn:hover:not(:disabled) {
+            background: var(--primary-color);
+            color: var(--bg-color);
+            box-shadow: 0 0 15px var(--primary-color);
+        }
+
+        .xianxia-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: #555;
+            color: #555;
+        }
+
+        /* 道具欄 */
+        .inventory-panel {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px dashed #555;
+        }
+
+        .item-btn {
+            padding: 10px 15px;
+            font-size: 0.9em;
+            background: #333;
+            border: 1px solid #FFD700; /* 金色邊框 */
+            color: #FFD700;
+        }
+
+        .item-btn:hover:not(:disabled) {
+            background: #FFD700;
+            color: #333;
+            box-shadow: 0 0 10px #FFD700;
+        }
+
+        /* 開始畫面與結算畫面 */
+        #start-screen, #game-over-screen { text-align: center; }
+        .big-btn { width: 100%; text-align: center; font-size: 1.3em; margin-top: 20px;}
+
+        /* 動畫效果 */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        .shake { animation: shake 0.5s; }
+
+        /* 響應式調整 */
+        @media (max-width: 600px) {
+            .options-grid { grid-template-columns: 1fr; }
+            .status-panel { flex-direction: column; text-align: center; }
         }
     </style>
 </head>
 <body>
 
-    <h2>凸透鏡成像原理演示</h2>
-    <p class="instruction">請用滑鼠拖曳左側的紅色箭頭（物體）來觀察成像變化。</p>
+    <h1>理化證道錄：波光篇</h1>
 
-    <div class="container">
-        <canvas id="lensCanvas" width="800" height="400"></canvas>
-        <div id="status-panel">
-            <h3>成像狀態分析</h3>
-            <p id="position-status">物體位置：...</p>
-            <p id="image-nature">成像性質：...</p>
-        </div>
+    <div id="start-screen" class="container">
+        <h2>乃國中二年級修士，欲渡第二次段考天劫？</h2>
+        <p>此乃「波動」與「光影」之試煉場。</p>
+        <p>心魔將化為難題阻你道心。</p>
+        <p>準備好燃燒你的中二魂，證得理化大道了嗎？</p>
+        <button class="xianxia-btn big-btn" onclick="startGame()">吾已準備完畢，開啟試煉！</button>
+        <p style="margin-top: 20px; font-size: 0.8em; color: #aaa;">(目前僅開放「練功房」無盡模式)</p>
     </div>
 
-<script>
-    const canvas = document.getElementById('lensCanvas');
-    const ctx = canvas.getContext('2d');
-    const statusPosition = document.getElementById('position-status');
-    const statusNature = document.getElementById('image-nature');
+    <div id="battle-stage" class="container">
+        <div class="status-panel">
+            <div class="status-item">道號：<span class="highlight">苦命國二生</span></div>
+            <div class="status-item">境界：<span id="realm-display" class="highlight">練氣期一層</span></div>
+            <div class="status-item">真氣(HP)：<span id="hp-display" class="danger">100/100</span></div>
+            <div class="status-item">修為(Score)：<span id="score-display" class="highlight">0</span></div>
+        </div>
 
-    // --- 配置參數 ---
-    const W = canvas.width;
-    const H = canvas.height;
-    const centerX = W / 2; // 透鏡中心 X
-    const centerY = H / 2; // 光軸 Y
-    const f = 120;         // 焦距 (pixels)
-    let objU = 200;        // 初始物距 (距離透鏡中心的距離)
-    const objH = 80;       // 物體高度
+        <div id="question-container">
+            <div id="question-text" class="question-box">
+                題目載入中... 正在凝聚心魔實體...
+            </div>
+            <div id="options-container" class="options-grid">
+                </div>
+        </div>
 
-    let isDragging = false;
-
-    // --- 繪圖輔助函數 ---
-
-    // 繪製線條
-    function drawLine(x1, y1, x2, y2, color, width = 1, dashed = false) {
-        ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = width;
-        if (dashed) {
-            ctx.setLineDash([5, 5]);
-        } else {
-            ctx.setLineDash([]);
-        }
-        ctx.stroke();
-        ctx.setLineDash([]); // 重置
-    }
-
-    // 繪製帶箭頭的線（用於物體和像）
-    function drawArrow(x, yFrom, yTo, color, label) {
-        const headlen = 10; // 箭頭長度
-        const angle = Math.atan2(yTo - yFrom, 0);
+        <div class="inventory-panel">
+            <span style="align-self: center;">法寶囊：</span>
+            <button id="item-heal" class="xianxia-btn item-btn" onclick="useItem('heal')">回氣丹 (剩餘: 3)</button>
+            <button id="item-hint" class="xianxia-btn item-btn" onclick="useItem('hint')">洞察天眼符 (剩餘: 1)</button>
+        </div>
         
-        ctx.beginPath();
-        ctx.moveTo(x, yFrom);
-        ctx.lineTo(x, yTo);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
-        ctx.stroke();
+        <div id="feedback-message" style="margin-top: 15px; text-align: center; font-weight: bold; min-height: 1.2em;"></div>
+    </div>
 
-        // 箭頭頭部
-        ctx.beginPath();
-        ctx.moveTo(x, yTo);
-        ctx.lineTo(x - headlen * Math.cos(angle - Math.PI / 6), yTo - headlen * Math.sin(angle - Math.PI / 6));
-        ctx.lineTo(x - headlen * Math.cos(angle + Math.PI / 6), yTo - headlen * Math.sin(angle + Math.PI / 6));
-        ctx.lineTo(x, yTo);
-        ctx.lineTo(x - headlen * Math.cos(angle - Math.PI / 6), yTo - headlen * Math.sin(angle - Math.PI / 6));
-        ctx.fillStyle = color;
-        ctx.fill();
+    <div id="game-over-screen" class="container" style="display: none;">
+        <h2 id="end-title">道心破碎！</h2>
+        <p id="end-message">你的理化根基尚淺，請重新修煉。</p>
+        <p>最終修為：<span id="final-score" class="highlight"></span></p>
+        <p>最終境界：<span id="final-realm" class="highlight"></span></p>
+        <button class="xianxia-btn big-btn" onclick="resetGame()">重塑道基，再來一次！</button>
+    </div>
 
-        // 標籤
-        ctx.fillStyle = color;
-        ctx.font = "14px Arial";
-        ctx.fillText(label, x - 15, yTo + (yTo > yFrom ? 20 : -10));
+
+<script>
+    // ================= 1. 遊戲資料設定 (題庫與狀態) =================
+
+    // 遊戲狀態
+    let gameState = {
+        hp: 100,
+        maxHp: 100,
+        score: 0,
+        realmLevel: 1, // 1:練氣, 2:築基, 3:金丹...
+        realms: ["凡人", "練氣期", "築基期", "金丹期", "元嬰期", "化神期", "理化仙帝"],
+        items: {
+            heal: 3,
+            hint: 1
+        },
+        currentQuestion: null,
+        isProcessing: false // 防止快速點擊
+    };
+
+    // 題庫 (中二風化)
+    // tag: sound (波動聲音), light (光學)
+    const questionBank = [
+        // --- 波動與聲音 ---
+        {
+            question: "【音波功試煉】古琴仙子撥動琴弦，發出高音與低音兩道音波刃。請問這兩道攻擊在空氣中傳播時，何種性質必定不同？",
+            options: ["波速 (攻擊速度)", "頻率 (靈力震動快慢)", "振幅 (破壞力大小)", "波長 (攻擊範圍)"],
+            correctIndex: 1,
+            tag: "sound",
+            explanation: "解說：在相同介質(空氣)中，波速相同。高低音對應的是頻率不同。"
+        },
+        {
+            question: "【傳音入密】你試圖在真空中使用「傳音入密」之術與隊友溝通，卻發現失敗了。這是因為聲波的何種特性受阻？",
+            options: ["聲波靈力不足", "聲波需要介質才能傳遞", "真空中有結界阻擋", "聲波被宇宙射線抵消了"],
+            correctIndex: 1,
+            tag: "sound",
+            explanation: "解說：聲音是力學波，需要介質(固、液、氣)才能傳播，真空中無法傳聲。"
+        },
+        {
+            question: "【迴音谷禁地】你在充滿瘴氣的山谷對著岩壁大喊一聲，2秒後聽到了自己的迴音回傳。已知當時聲速為 340 m/s，請問你距離岩壁多遠？",
+            options: ["170 公尺", "340 公尺", "680 公尺", "無限遠"],
+            correctIndex: 1,
+            tag: "sound",
+            explanation: "解說：聲音走了來回一趟。距離 = 速度 × (時間/2) = 340 × (2/2) = 340 公尺。"
+        },
+        // --- 光學 ---
+        {
+            question: "【靈泉幻影】你凝視著一口靈泉，發現插入水中的「斬龍劍」看起來折斷了且向上彎曲。這是受到何種光學法則的影響？",
+            options: ["光的反射 (鏡花水月)", "光的折射 (空間扭曲)", "光的直線傳播 (正道之光)", "光的色散 (七彩琉璃)"],
+            correctIndex: 1,
+            tag: "light",
+            explanation: "解說：光從水進入空氣時發生折射，偏離法線，使得物體看起來比實際位置淺（向上彎曲）。"
+        },
+        {
+            question: "【照妖鏡】傳說中的照妖鏡能照出妖怪的原形（正立、放大、虛像）。請問這面照妖鏡的本體應為何種光學法寶？",
+            options: ["平面鏡", "凹面鏡", "凸透鏡", "凹透鏡"],
+            correctIndex: 2,
+            tag: "light",
+            explanation: "解說：能形成「正立、放大、虛像」的只有凸透鏡（當物體在焦距內時，即放大鏡原理）和凹面鏡。但通常法寶設定為透鏡居多，選項中凸透鏡最符合放大鏡的描述。"
+        },
+        {
+            question: "【影分身之術】你在練功房的一面大平面鏡前修煉。當你以 2 m/s 的速度走向鏡子時，鏡中的「心魔分身」會以多快的速度接近你？",
+            options: ["2 m/s", "4 m/s", "0 m/s", "8 m/s"],
+            correctIndex: 1,
+            tag: "light",
+            explanation: "解說：平面鏡成像，物距等於像距。你走近 2m，像也走近 2m，兩者相對接近速度為 2+2 = 4 m/s。"
+        },
+         {
+            question: "【光之試煉】一道紅光真氣從空氣射入一塊透明靈石中，若入射角不為零，則下列關於這道真氣變化的敘述，何者正確？",
+            options: ["速度變快，波長變長", "速度變慢，頻率變小", "速度變慢，波長變短", "頻率不變，速度變快"],
+            correctIndex: 2,
+            tag: "light",
+            explanation: "解說：光從光疏介質(空氣)進入光密介質(靈石)，速度變慢。頻率由光源決定不變。根據 v=fλ，v變小，f不變，所以波長λ變短。"
+        }
+    ];
+
+    // ================= 2. 遊戲邏輯控制 =================
+
+    function startGame() {
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('battle-stage').style.display = 'block';
+        resetGameState();
+        updateUI();
+        nextQuestion();
     }
 
-    // 繪製點和標籤
-    function drawPoint(x, y, label) {
-        ctx.beginPath();
-        ctx.arc(x, y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = '#333';
-        ctx.fill();
-        ctx.font = "14px Arial";
-        ctx.fillText(label, x - 5, y + 20);
+    function resetGameState() {
+        gameState.hp = 100;
+        gameState.score = 0;
+        gameState.realmLevel = 1;
+        gameState.items = { heal: 3, hint: 1 };
+        gameState.isProcessing = false;
+        updateItemButtons();
     }
 
-    // --- 核心繪圖邏輯 ---
-    function draw() {
-        ctx.clearRect(0, 0, W, H);
+    function nextQuestion() {
+        gameState.isProcessing = false;
+        document.getElementById('feedback-message').textContent = '';
+        document.getElementById('battle-stage').classList.remove('shake');
 
-        // 1. 繪製環境 (光軸、透鏡、焦點)
-        // 光軸
-        drawLine(0, centerY, W, centerY, '#999');
+        // 隨機抽選題目 (實際應用可以改成不重複抽選直到題庫用完)
+        const randomIndex = Math.floor(Math.random() * questionBank.length);
+        gameState.currentQuestion = questionBank[randomIndex];
 
-        // 凸透鏡 (簡化為帶箭頭的線段)
-        drawLine(centerX, centerY - 150, centerX, centerY + 150, '#007bff', 3);
-        // 透鏡兩端的箭頭標記 (表示凸透鏡)
-        ctx.beginPath(); ctx.moveTo(centerX-5, centerY-145); ctx.lineTo(centerX, centerY-155); ctx.lineTo(centerX+5, centerY-145); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(centerX-5, centerY+145); ctx.lineTo(centerX, centerY+155); ctx.lineTo(centerX+5, centerY+145); ctx.stroke();
+        renderQuestion(gameState.currentQuestion);
+    }
 
-        // 焦點 F1, F2, 和 2F 位置
-        drawPoint(centerX - f, centerY, "F1");
-        drawPoint(centerX + f, centerY, "F2");
-        drawPoint(centerX - 2*f, centerY, "2F1");
-        drawPoint(centerX + 2*f, centerY, "2F2");
-        drawPoint(centerX, centerY, "O"); // 鏡心
+    function renderQuestion(q) {
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        
+        // 加上題目類型標籤
+        let typeTag = q.tag === 'sound' ? '【波動音律】' : '【光影幻術】';
+        questionTextEl.innerText = typeTag + q.question;
+        
+        optionsContainer.innerHTML = ''; // 清空舊選項
 
-        // 2. 計算成像位置和性質
-        // 透鏡公式: 1/v = 1/f - 1/u
-        // 注意：這裡 u 在左側，我們計算時取正值，公式裡用代數值需注意符號。
-        // 這裡採用幾何光學慣例：物在左為正，像在右為正，焦距凸為正。
-        let imgV = (f * objU) / (objU - f);
-        let magnification = -imgV / objU;
-        let imgH = objH * magnification;
+        q.options.forEach((optionText, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'xianxia-btn option-btn';
+            btn.innerText = optionText;
+            btn.dataset.index = index;
+            btn.onclick = () => checkAnswer(index);
+            optionsContainer.appendChild(btn);
+        });
+        
+        // 重新啟用所有選項按鈕（為了道具效果復原）
+        const optionBtns = document.querySelectorAll('.option-btn');
+        optionBtns.forEach(btn => btn.disabled = false);
+    }
 
-        const objX = centerX - objU;
-        const objTipY = centerY - objH;
-        const imgX = centerX + imgV;
-        const imgTipY = centerY + imgH; // 注意這裡加號，因為Y軸向下為正，而放大率負號已包含倒立信息
+    function checkAnswer(selectedIndex) {
+        if (gameState.isProcessing) return;
+        gameState.isProcessing = true;
 
-        // 3. 繪製物體 (紅色箭頭)
-        drawArrow(objX, centerY, objTipY, '#d9534f', '物體');
+        const correctIndex = gameState.currentQuestion.correctIndex;
+        const feedbackEl = document.getElementById('feedback-message');
+        const optionBtns = document.querySelectorAll('.option-btn');
 
-        // 4. 繪製成像 (藍色箭頭) 和 光線追蹤
-        const rayColor = "rgba(255, 165, 0, 0.6)"; // 橙色光線
-        const virtualRayColor = "rgba(255, 165, 0, 0.3)"; // 虛像反向延長線
+        // 鎖定按鈕
+        optionBtns.forEach(btn => btn.disabled = true);
 
-        if (objU === f) {
-            // --- Case: u = f (不成像/無窮遠) ---
-            updateStatus("物距 = 焦距 (u = f)", "不成像 (光線平行)");
-            
-            // 光線 1: 平行主軸 -> 過焦點 F2
-            drawLine(objX, objTipY, centerX, objTipY, rayColor, 2);
-            drawLine(centerX, objTipY, W, objTipY + (W-centerX)*(0 - objTipY)/(f), rayColor, 2);
-
-            // 光線 2: 過鏡心 -> 直線傳播
-            drawLine(objX, objTipY, W, objTipY + (W-objX)*(centerY - objTipY)/(centerX - objX), rayColor, 2);
-
-        } else if (objU > f) {
-            // --- Case: u > f (實像) ---
-            drawArrow(imgX, centerY, imgTipY, '#0056b3', '實像');
-            updateStatusBasedOnU(objU);
-
-            // 光線 1: 平行主軸 -> 過焦點 F2 -> 到達成像點
-            drawLine(objX, objTipY, centerX, objTipY, rayColor, 2);
-            drawLine(centerX, objTipY, imgX, imgTipY, rayColor, 2);
-
-            // 光線 2: 過鏡心 -> 直線傳播 -> 到達成像點
-            drawLine(objX, objTipY, imgX, imgTipY, rayColor, 2);
-             // 延伸出去一點
-             drawLine(imgX, imgTipY, imgX + 50, imgTipY + 50 * (imgTipY-centerY)/(imgX-centerX), rayColor, 2);
-
-
-            // 光線 3: 過焦點 F1 -> 平行主軸 -> 到達成像點
-            drawLine(objX, objTipY, centerX, imgTipY, rayColor, 2); // 實際上是先過F1再到鏡子
-            drawLine(centerX, imgTipY, imgX, imgTipY, rayColor, 2);
-
+        if (selectedIndex === correctIndex) {
+            // 答對
+            feedbackEl.innerHTML = '<span style="color: var(--primary-color)">斬殺心魔成功！修為大增！</span>';
+            gainScore(100 + gameState.realmLevel * 10); // 境界越高加分越多
         } else {
-            // --- Case: u < f (虛像) ---
-            drawArrow(imgX, centerY, imgTipY, '#8A2BE2', '虛像'); // 紫色虛像
-            updateStatus("物距 < 焦距 (u < f)", "正立、放大、虛像 (放大鏡原理)");
+            // 答錯
+            feedbackEl.innerHTML = '<span style="color: var(--secondary-color)">遭到心魔反噬！真氣受損！</span>';
+            takeDamage(20 + gameState.realmLevel * 5); // 境界越高扣血越多
+            document.getElementById('battle-stage').classList.add('shake');
+            // 標示正確答案
+            optionBtns[correctIndex].style.backgroundColor = '#00eaff';
+            optionBtns[correctIndex].style.color = '#000';
+             // 標示錯誤答案
+            optionBtns[selectedIndex].style.backgroundColor = '#ff3333';
+        }
 
-            // 光線 1: 平行主軸 -> 過焦點 F2 (向右發散)
-            drawLine(objX, objTipY, centerX, objTipY, rayColor, 2);
-            // 實際折射光
-            drawLine(centerX, objTipY, W, objTipY + (W-centerX)*(centerY - objTipY)/(f), rayColor, 2);
-            // 反向延長線 (虛線) 指向虛像
-            drawLine(centerX, objTipY, imgX, imgTipY, virtualRayColor, 2, true);
+        updateUI();
 
-            // 光線 2: 過鏡心 (向右發散)
-            // 實際光
-            drawLine(objX, objTipY, W, objTipY + (W-objX)*(centerY - objTipY)/(centerX - objX), rayColor, 2);
-             // 反向延長線 (虛線) 指向虛像
-            drawLine(centerX, centerY, imgX, imgTipY, virtualRayColor, 2, true);
+        // 檢查是否死亡
+        if (gameState.hp <= 0) {
+            setTimeout(gameOver, 1500);
+        } else {
+            setTimeout(nextQuestion, 2000); // 2秒後下一題
         }
     }
 
-    // --- 更新狀態面板文字 ---
-    function updateStatus(posText, natureText) {
-        statusPosition.innerHTML = `物體位置： <span class="highlight">${posText}</span>`;
-        statusNature.innerHTML = `成像性質： <span class="highlight">${natureText}</span>`;
+    function takeDamage(amount) {
+        gameState.hp = Math.max(0, gameState.hp - amount);
     }
 
-    function updateStatusBasedOnU(u) {
-        let pos, nature;
-        if (u > 2 * f) {
-            pos = "物距 > 2倍焦距 (u > 2f)";
-            nature = "倒立、縮小、實像 (照相機原理)";
-        } else if (Math.abs(u - 2 * f) < 2) { // 允許一點誤差
-            pos = "物距 = 2倍焦距 (u = 2f)";
-            nature = "倒立、等大、實像 (影印機原理)";
-        } else if (u > f && u < 2 * f) {
-            pos = "焦距 < 物距 < 2倍焦距 (f < u < 2f)";
-            nature = "倒立、放大、實像 (投影機原理)";
-        }
-        updateStatus(pos, nature);
+    function gainScore(amount) {
+        gameState.score += amount;
+        checkRealmUp();
     }
 
-
-    // --- 事件監聽 (拖曳互動) ---
-    canvas.addEventListener('mousedown', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        const objX = centerX - objU;
-        const objTipY = centerY - objH;
-
-        // 檢查是否點擊在物體箭頭附近
-        if (mouseX > objX - 20 && mouseX < objX + 20 &&
-            mouseY > objTipY - 20 && mouseY < centerY + 10) {
-            isDragging = true;
-            canvas.style.cursor = 'grabbing';
+    function checkRealmUp() {
+        // 簡單的境界升級公式：每 500 分升一級
+        const newLevel = Math.floor(gameState.score / 500) + 1;
+        if (newLevel > gameState.realmLevel && newLevel < gameState.realms.length) {
+            gameState.realmLevel = newLevel;
+            gameState.hp = gameState.maxHp; // 升級回滿血
+            gameState.items.heal += 1; // 升級獎勵丹藥
+            document.getElementById('feedback-message').innerHTML += '<br><span style="color: gold; font-size: 1.2em;">恭喜突破境界！真氣全滿！獲得回氣丹！</span>';
+            updateItemButtons();
         }
-    });
+    }
 
-    canvas.addEventListener('mousemove', (e) => {
-        if (isDragging) {
-            const rect = canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
+    function useItem(type) {
+        if (gameState.isProcessing) return;
+
+        if (type === 'heal' && gameState.items.heal > 0) {
+            gameState.hp = Math.min(gameState.maxHp, gameState.hp + 50);
+            gameState.items.heal--;
+            document.getElementById('feedback-message').innerHTML = '<span style="color: gold">服用回氣丹，真氣恢復了！</span>';
+        } else if (type === 'hint' && gameState.items.hint > 0) {
+            // 洞察天眼：刪除兩個錯誤選項
+            const correctIndex = gameState.currentQuestion.correctIndex;
+            const optionBtns = Array.from(document.querySelectorAll('.option-btn'));
+            let wrongOptions = optionBtns.filter(btn => parseInt(btn.dataset.index) !== correctIndex);
             
-            // 更新物距 objU，並限制範圍
-            // 限制不能超過左邊界，也不能太靠近鏡心(避免計算爆炸)
-            let newU = centerX - mouseX;
-            newU = Math.max(10, Math.min(newU, centerX - 20)); 
-            
-            objU = newU;
-            draw();
-        }
-    });
+            // 隨機選兩個錯誤的停用
+            wrongOptions = shuffleArray(wrongOptions);
+            if(wrongOptions.length > 0) wrongOptions[0].disabled = true;
+            if(wrongOptions.length > 1) wrongOptions[1].disabled = true;
 
-    canvas.addEventListener('mouseup', () => {
-        isDragging = false;
-        canvas.style.cursor = 'crosshair';
-    });
-    
-    // 初始繪製
-    draw();
+            gameState.items.hint--;
+            document.getElementById('feedback-message').innerHTML = '<span style="color: gold">開啟洞察天眼，看破了部分虛妄！</span>';
+        }
+        updateUI();
+        updateItemButtons();
+    }
+
+    function gameOver() {
+        document.getElementById('battle-stage').style.display = 'none';
+        document.getElementById('game-over-screen').style.display = 'block';
+
+        const endTitle = document.getElementById('end-title');
+        const endMessage = document.getElementById('end-message');
+
+        if (gameState.realmLevel >= 4) {
+             endTitle.innerText = "肉身雖殞，道魂不滅！";
+             endMessage.innerText = "你的理化造詣已達一定境界，惜哉遭遇強敵。";
+        } else {
+             endTitle.innerText = "道心破碎，走火入魔！";
+             endMessage.innerText = "你的理化根基尚淺，請回去翻開課本重新修煉。";
+        }
+
+        document.getElementById('final-score').innerText = gameState.score;
+        document.getElementById('final-realm').innerText = gameState.realms[gameState.realmLevel];
+    }
+
+    function resetGame() {
+        document.getElementById('game-over-screen').style.display = 'none';
+        startGame();
+    }
+
+    // ================= 3. UI 更新輔助函數 =================
+
+    function updateUI() {
+        // HP
+        const hpEl = document.getElementById('hp-display');
+        hpEl.innerText = `${gameState.hp}/${gameState.maxHp}`;
+        hpEl.style.color = gameState.hp < 30 ? 'var(--secondary-color)' : (gameState.hp > 70 ? 'var(--primary-color)' : '#e0e0e0');
+        
+        // Score & Realm
+        document.getElementById('score-display').innerText = gameState.score;
+        document.getElementById('realm-display').innerText = gameState.realms[gameState.realmLevel];
+    }
+
+    function updateItemButtons() {
+        document.getElementById('item-heal').innerText = `回氣丹 (剩餘: ${gameState.items.heal})`;
+        document.getElementById('item-heal').disabled = gameState.items.heal <= 0;
+        
+        document.getElementById('item-hint').innerText = `洞察天眼符 (剩餘: ${gameState.items.hint})`;
+        document.getElementById('item-hint').disabled = gameState.items.hint <= 0;
+    }
+
+    // 工具函數：陣列洗牌
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
 
 </script>
 </body>
 </html>
-
